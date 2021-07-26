@@ -4,6 +4,7 @@
 
 #include "GameTimer.h"
 #include "CommandBundle.h"
+#include "CMeshObject.h"
 
 class Dx
 {
@@ -25,6 +26,7 @@ private:
 
 public:
 	Dx(HINSTANCE instance);
+	~Dx();
 
 	bool Init();
 
@@ -32,6 +34,32 @@ public:
 
 	void Update(const GameTimer& gt)
 	{
+		float mPhi = DX::XM_PIDIV4;
+		float mTheta = 1.5f * DX::XM_PI;
+
+		float x = mRadius * sinf(mPhi) * cosf(mTheta);
+		float z = mRadius * sinf(mPhi) * sinf(mTheta);
+		float y = mRadius * cosf(mPhi);
+
+		using DX::XMVECTOR;
+		using DX::XMMATRIX;
+
+		XMVECTOR pos = DX::XMVectorSet(x, y, z, 1.0f);
+		XMVECTOR target = DX::XMVectorZero();
+		XMVECTOR up = DX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+		mView = DX::XMMatrixLookAtLH(pos, target, up);
+
+		XMMATRIX worldViewProj = mWorld * mView * mProj;
+
+		// Update the constant buffer with the latest worldViewProj matrix.
+		//ObjectConstants objConstants;
+		//XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
+		//mObjectCB->CopyData(0, objConstants);
+		worldViewProj = DX::XMMatrixTranspose(worldViewProj);
+		DX::XMFLOAT4X4 res;
+		DX::XMStoreFloat4x4(&res, worldViewProj);
+		mObjectCB.CopyToBuffer(0, &res);
 	}
 
 	void Render(const GameTimer& gt);
@@ -72,12 +100,6 @@ private:
 
 private:
 
-	struct Vertex
-	{
-		DX::XMFLOAT3 position;
-		DX::XMFLOAT4 color;
-	};
-
 	static Dx* mApp;
 
 	enum { SwapChainBufferCount = 2 };
@@ -87,7 +109,13 @@ private:
 	ComPtr<IDXGIFactory4> mFactory;
 	ComPtr<IDXGISwapChain> mSwapChain;
 	ComPtr<ID3D12Device> mDevice;
+	
 	ComPtr<ID3D12RootSignature> mRootSignature;
+
+	ID3D12DescriptorHeap* descriptorHeaps[1];
+	ComPtr<ID3D12DescriptorHeap> mCbvHeap;
+#define TempObjectCBType DX::XMFLOAT4X4
+	UploadBuffer mObjectCB;
 
 	ComPtr<ID3D12CommandQueue> mCommandQueue;
 	ComPtr<ID3D12CommandAllocator> mCommandAllocator;
@@ -99,10 +127,10 @@ private:
 	ComPtr<ID3D12DescriptorHeap> mRtvHeap;
 	ComPtr<ID3D12DescriptorHeap> mDsvHeap;
 
+	CMeshObject meshTest;
+
 	ComPtr<ID3D12PipelineState> mPSO = nullptr;
 	
-	ComPtr<ID3D12Resource> mVertexBuffer;
-	D3D12_VERTEX_BUFFER_VIEW mVertexBufferView;
 	ComPtr<ID3D12Resource> mDepthStencilBuffer;
 	ComPtr<ID3D12Resource> mRenderTargets[SwapChainBufferCount];
 
@@ -132,4 +160,10 @@ private:
 
 	bool mAppPaused = false;
 	bool mResizing = false;
+
+	float mRadius = 0.25;
+
+	DX::XMMATRIX mWorld = DX::XMMatrixIdentity();
+	DX::XMMATRIX mView = DX::XMMatrixIdentity();
+	DX::XMMATRIX mProj = DX::XMMatrixIdentity();
 };

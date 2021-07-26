@@ -139,18 +139,24 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CMeshObject.h" />
     <ClInclude Include="CommandBundle.h" />
     <ClInclude Include="Dx.h" />
     <ClInclude Include="GameTimer.h" />
     <ClInclude Include="include.h" />
     <ClInclude Include="MMFile.h" />
+    <ClInclude Include="UploadBuffer.h" />
+    <ClInclude Include="Vertex.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CMeshObject.cpp" />
     <ClCompile Include="CommandBundle.cpp" />
     <ClCompile Include="Dx.cpp" />
     <ClCompile Include="GameTimer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MMFile.cpp" />
+    <ClCompile Include="UploadBuffer.cpp" />
+    <ClCompile Include="Vertex.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="shaders.txt" />
