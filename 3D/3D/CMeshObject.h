@@ -8,45 +8,37 @@ class CMeshObject
 {
 public:
 
-	void Init(ComPtr<ID3D12Device> device, ComPtr<ID3D12PipelineState> pso, DXGI_FORMAT format)
+	void Init(ComPtr<ID3D12Device> device, ComPtr<ID3D12PipelineState> pso, D3D12_PRIMITIVE_TOPOLOGY topology, Vertex* triangleVertices, int triangles, UINT32* indexList, int indexes)
 	{
 		this->device = device;
 
-		//TODO
-		Vertex triangleVertices[] = {
-			{ { 0.0f, 0.25f, 0.0f}, { 1.0f, 0.0f, 0.0f, 1.0f } },
-			{ { 0.5, -0.25f, 0}, { 0.0f, 1.0f, 0.0f, 1.0f } },
-			{ { -0.5, -0.25f, 0}, { 0.0f, 0.0f, 1.0f, 1.0f } },
-			{ {1, 0.25, 0}, {1,1,0,0}}
-		};
+		using DX::XMFLOAT3;
+		using DX::XMFLOAT4;
+		namespace Colors = DX::Colors;
 
-		uint16_t indexList[] = {
-			0,1,2, 3,1,0
-		};
-
-		mVertexBuffer.Init(device.Get(), 1, sizeof(triangleVertices), false);
-		mVertexBuffer.CopyToBuffer(0, triangleVertices);
-		//TODO CCreateBuffer(mVertexBuffer, sizeof(triangleVertices));
-		//CCopyToBuffer(mVertexBuffer, triangleVertices, sizeof(triangleVertices));
+		UINT size = sizeof(Vertex) * triangles;
+		mVertexBuffer.Init(device.Get(), size, false);
+		mVertexBuffer.CopyToBuffer(triangleVertices);
 		mVertexBufferView.BufferLocation = mVertexBuffer.mBuffer->GetGPUVirtualAddress();
 		mVertexBufferView.StrideInBytes = sizeof(Vertex);
-		mVertexBufferView.SizeInBytes = sizeof(triangleVertices);
+		mVertexBufferView.SizeInBytes = size;
 
-		mIndexBuffer.Init(device.Get(), 1, sizeof(indexList), false);
-		mIndexBuffer.CopyToBuffer(0, indexList);
+		size = sizeof(UINT32) * indexes;
+		mIndexBuffer.Init(device.Get(), size, false);
+		mIndexBuffer.CopyToBuffer(indexList);
 		mIndexBufferView.BufferLocation = mIndexBuffer.mBuffer->GetGPUVirtualAddress();
-		mIndexBufferView.SizeInBytes = sizeof(indexList);
-		mIndexBufferView.Format = DXGI_FORMAT_R16_UINT;
+		mIndexBufferView.SizeInBytes = size;
+		mIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
 
 		bundle.Init(device, pso);
 
 		{
 			auto& cmdList = bundle.mCommandList;
 
-			cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			cmdList->IASetPrimitiveTopology(topology);
 			cmdList->IASetIndexBuffer(&mIndexBufferView);
 			cmdList->IASetVertexBuffers(0, 1, &mVertexBufferView);
-			cmdList->DrawIndexedInstanced(_countof(indexList), 1, 0, 0, 0);
+			cmdList->DrawIndexedInstanced(indexes, 1, 0, 0, 0);
 
 			DxThrowIfFailed(cmdList->Close());
 		}
@@ -61,5 +53,7 @@ private:
 	UploadBuffer mIndexBuffer;
 	D3D12_VERTEX_BUFFER_VIEW mVertexBufferView;
 	D3D12_INDEX_BUFFER_VIEW mIndexBufferView;
+
+	D3D12_PRIMITIVE_TOPOLOGY mTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 };
 

@@ -139,20 +139,26 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="CMeshObject.h" />
     <ClInclude Include="CommandBundle.h" />
     <ClInclude Include="Dx.h" />
+    <ClInclude Include="GameSetting.h" />
     <ClInclude Include="GameTimer.h" />
     <ClInclude Include="include.h" />
+    <ClInclude Include="KeyboardSetting.h" />
     <ClInclude Include="MMFile.h" />
     <ClInclude Include="UploadBuffer.h" />
     <ClInclude Include="Vertex.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CMeshObject.cpp" />
     <ClCompile Include="CommandBundle.cpp" />
     <ClCompile Include="Dx.cpp" />
+    <ClCompile Include="GameSetting.cpp" />
     <ClCompile Include="GameTimer.cpp" />
+    <ClCompile Include="KeyboardSetting.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MMFile.cpp" />
     <ClCompile Include="UploadBuffer.cpp" />

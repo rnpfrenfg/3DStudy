@@ -31,11 +31,14 @@ Dx::Dx(HINSTANCE instance)
 	assert(mApp == nullptr);
 	mApp = this;
 	mhAppInst = instance;
+
+	gameSetting.mouseSensivity = 0.5;//TODO
 }
 
 Dx::~Dx()
 {
 	CloseHandle(mFenceEvent);
+	UnregisterClass(mClassName.c_str(), mhAppInst);
 }
 
 LRESULT Dx::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -44,14 +47,6 @@ LRESULT Dx::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 	case WM_CREATE:
 		return 0;
-		/*
-			case WM_PAINT:
-		PAINTSTRUCT ps;
-		BeginPaint(handle, &ps);
-
-		EndPaint(handle, &ps);
-		return 0;
-		*/
 	case WM_ACTIVATE:
 		if (LOWORD(wParam) == WA_INACTIVE)
 		{
@@ -93,6 +88,44 @@ LRESULT Dx::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		return 0;
 	case WM_MOUSEMOVE:
 		//OnMouseMove(wParam, ........);
+	{
+		WORD newX = LOWORD(lParam);
+		float difX = newX - mouseX;
+		difX = DX::XMConvertToRadians(difX * gameSetting.mouseSensivity);
+		
+		WORD newY = HIWORD(lParam);
+		float difY = newY - mouseY;
+		difY = DX::XMConvertToRadians(difY * gameSetting.mouseSensivity);
+
+		mMainCamera.Rotate(difX, difY);
+
+		mouseX = newX;
+		mouseY = newY;
+
+	}
+		return 0;
+	case WM_CHAR:
+		std::cout << (char)wParam;
+		switch ((char)wParam)
+		{
+		case 'w':
+		case 'W':
+			z -= 1;
+			return 0;
+		case 's':
+		case 'S':
+			z += 1;
+			return 0;
+		case 'a':
+		case 'A':
+			x += 1;
+			return 0;
+		case 'd':
+		case 'D':
+			x -= 1;
+			return 0;
+		}
+	case WM_KEYDOWN:
 		return 0;
 	case WM_DESTROY:
 		PostQuitMessage(0);
@@ -128,11 +161,21 @@ bool Dx::Init()
 		DxThrowIfFailed(-1);
 	}
 
-
 	LoadPipeline();
 	LoadAssets();
 
 	OnResize();
+
+	{
+		CURSORINFO cursor;
+		GetCursorInfo(&cursor);
+		mouseX = cursor.ptScreenPos.x;
+		mouseY = cursor.ptScreenPos.y;
+	}
+
+	mMainCamera.SetProj(mClientWidth, mClientHeight);
+	//mMainCamera.SetRotate(1, 0);
+	z = 5;
 
 	return true;
 }
@@ -150,7 +193,7 @@ bool Dx::InitMainWindow()
 	winc.cbWndExtra = 0;
 	winc.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
 	winc.lpszMenuName = NULL;
-	winc.lpszClassName = L"MainWnd";
+	winc.lpszClassName = mClassName.c_str();
 	winc.lpfnWndProc = winProc;
 
 	if (!(RegisterClassEx(&winc)))
@@ -173,7 +216,7 @@ bool Dx::InitMainWindow()
 
 	ShowWindow(mhMainWnd, SW_SHOW);
 	UpdateWindow(mhMainWnd);
-	
+
 	return true;
 }
 
@@ -284,7 +327,7 @@ void Dx::LoadAssets()
 			slot.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 			slot.DescriptorTable.NumDescriptorRanges = slots;
 			slot.DescriptorTable.pDescriptorRanges = &cbvTable;
-			
+
 			//slot.Constants, descriptor
 		}
 
@@ -333,7 +376,7 @@ void Dx::LoadAssets()
 #undef C_ADD_SHADER
 
 		psoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
-		psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
+		psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
 		psoDesc.RasterizerState.FrontCounterClockwise = FALSE;
 		psoDesc.RasterizerState.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
 		psoDesc.RasterizerState.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
@@ -351,7 +394,7 @@ void Dx::LoadAssets()
 			D3D12_RENDER_TARGET_BLEND_DESC& blendDesc = psoDesc.BlendState.RenderTarget[i];
 			blendDesc.BlendEnable = FALSE;
 			blendDesc.LogicOpEnable = FALSE;
-			
+
 			blendDesc.SrcBlend = D3D12_BLEND_ONE;
 			blendDesc.DestBlend = D3D12_BLEND_ZERO;
 			blendDesc.BlendOp = D3D12_BLEND_OP_ADD;
@@ -398,17 +441,13 @@ void Dx::LoadAssets()
 		DxThrowIfFailed(mDevice->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&mCbvHeap)));
 
 
-		mObjectCB.Init(mDevice.Get(), 1, sizeof(TempObjectCBType), true);
-
-		D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mObjectCB.mBuffer->GetGPUVirtualAddress();//TODO
+		mObjectCB.Init(mDevice.Get(), sizeof(TempObjectCBType), true);
 
 		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
-		cbvDesc.BufferLocation = cbAddress;
+		cbvDesc.BufferLocation = mObjectCB.mBuffer->GetGPUVirtualAddress();
 		cbvDesc.SizeInBytes = mObjectCB.CalcConstantBufferByteSize(sizeof(TempObjectCBType));
 
 		mDevice->CreateConstantBufferView(&cbvDesc, mCbvHeap->GetCPUDescriptorHandleForHeapStart());
-
-		//mObjectCB.CopyToBuffer(0, &mWorld);//TEST
 	}
 
 	DxThrowIfFailed(mDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&mFence)));
@@ -419,7 +458,49 @@ void Dx::LoadAssets()
 
 	CCreateCommandBundles();
 
-	meshTest.Init(mDevice, mPSO, mDepthStencilFormat);
+	{
+		std::ios_base::sync_with_stdio(false);
+		std::cout.tie(NULL);
+		using std::cout;
+
+		std::ifstream fin;
+		fin.open("Models/skull.txt", std::ios::in);
+		if (fin.fail())
+		{
+			DxThrowIfFailed(-1);
+		}
+		
+		int vertexes;
+		int indexes;
+		
+		fin >> vertexes >> indexes;
+		cout << vertexes <<'\n' << indexes;;
+
+		Vertex* vertexList = new Vertex[vertexes];
+		for (int i = 0; i < vertexes; i++)
+		{
+			fin >> vertexList[i].position.x;
+			fin >> vertexList[i].position.y;
+			fin >> vertexList[i].position.z;
+
+			vertexList[i].color = { 1,1,1,1 };
+
+			float temp;
+			fin >> temp;
+			fin >> temp;
+			fin >> temp;
+		}
+		UINT32* indexList = new UINT32[indexes * 3];
+		for (int i = 0; i < indexes * 3; i++)
+		{
+			fin >> indexList[i];
+		}
+
+		meshTest.Init(mDevice, mPSO, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, vertexList, vertexes, indexList, 3 * indexes);
+
+		delete[] indexList;
+		delete[] vertexList;
+	}
 }
 
 void Dx::CCreateCommandBundles()
@@ -442,7 +523,6 @@ void Dx::CCreateCommandBundles()
 
 		DxThrowIfFailed(cmdList->Close());
 	}
-
 }
 
 void Dx::FlushCommandQueue()
@@ -537,7 +617,7 @@ void Dx::Render(const GameTimer& gt)
 	DxThrowIfFailed(mCommandList->Reset(mCommandAllocator.Get(), mPSO.Get()));
 
 	D3D12_RESOURCE_BARRIER barrier;
-	
+
 	mCommandList->RSSetViewports(1, &mScreenViewport);
 	mCommandList->RSSetScissorRects(1, &mScissorRect);
 
@@ -548,8 +628,6 @@ void Dx::Render(const GameTimer& gt)
 	rtvHandle.ptr = mRtvHeap->GetCPUDescriptorHandleForHeapStart().ptr + mCurrBackBuffer * mRtvDescriptorSize;
 	D3D12_CPU_DESCRIPTOR_HANDLE dsView = DepthStencilView();
 	mCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsView);
-
-	// Record commands.
 
 	mCommandList->ClearRenderTargetView(CurrentBackBufferView(), DX::Colors::LightSteelBlue, 0, nullptr);
 	mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
@@ -659,6 +737,23 @@ void Dx::OnResize()
 	mCommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
 
 	FlushCommandQueue();
+}
+
+void Dx::Update(const GameTimer& gt)
+{
+	using DX::XMVECTOR;
+	using DX::XMMATRIX;
+
+	mMainCamera.SetPos(x, y, z);
+	mMainCamera.SetView();
+
+
+	XMMATRIX worldViewProj = mWorld * mMainCamera.mView * mMainCamera.mProj;
+
+	worldViewProj = DX::XMMatrixTranspose(worldViewProj);
+	DX::XMFLOAT4X4 res;
+	DX::XMStoreFloat4x4(&res, worldViewProj);
+	mObjectCB.CopyToBuffer(&res);
 }
 
 void Dx::Set4xMsaaState(bool value)

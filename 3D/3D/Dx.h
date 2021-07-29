@@ -2,9 +2,13 @@
 
 #include "include.h"
 
-#include "GameTimer.h"
-#include "CommandBundle.h"
+#include "Camera.h"
 #include "CMeshObject.h"
+#include "CommandBundle.h"
+#include "GameSetting.h"
+#include "GameTimer.h"
+
+#include <fstream>
 
 class Dx
 {
@@ -23,6 +27,11 @@ private:
 	HWND mhMainWnd;
 
 	HANDLE mFenceEvent;
+	std::wstring mClassName = L"MainWnd";
+	std::wstring mMainWndCaption = L"d3d App";
+
+	WORD mouseX;
+	WORD mouseY;
 
 public:
 	Dx(HINSTANCE instance);
@@ -32,35 +41,7 @@ public:
 
 	void OnResize();
 
-	void Update(const GameTimer& gt)
-	{
-		float mPhi = DX::XM_PIDIV4;
-		float mTheta = 1.5f * DX::XM_PI;
-
-		float x = mRadius * sinf(mPhi) * cosf(mTheta);
-		float z = mRadius * sinf(mPhi) * sinf(mTheta);
-		float y = mRadius * cosf(mPhi);
-
-		using DX::XMVECTOR;
-		using DX::XMMATRIX;
-
-		XMVECTOR pos = DX::XMVectorSet(x, y, z, 1.0f);
-		XMVECTOR target = DX::XMVectorZero();
-		XMVECTOR up = DX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
-		mView = DX::XMMatrixLookAtLH(pos, target, up);
-
-		XMMATRIX worldViewProj = mWorld * mView * mProj;
-
-		// Update the constant buffer with the latest worldViewProj matrix.
-		//ObjectConstants objConstants;
-		//XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
-		//mObjectCB->CopyData(0, objConstants);
-		worldViewProj = DX::XMMatrixTranspose(worldViewProj);
-		DX::XMFLOAT4X4 res;
-		DX::XMStoreFloat4x4(&res, worldViewProj);
-		mObjectCB.CopyToBuffer(0, &res);
-	}
+	void Update(const GameTimer& gt);
 
 	void Render(const GameTimer& gt);
 
@@ -100,6 +81,8 @@ private:
 
 private:
 
+	Camera mMainCamera;
+
 	static Dx* mApp;
 
 	enum { SwapChainBufferCount = 2 };
@@ -109,7 +92,7 @@ private:
 	ComPtr<IDXGIFactory4> mFactory;
 	ComPtr<IDXGISwapChain> mSwapChain;
 	ComPtr<ID3D12Device> mDevice;
-	
+		
 	ComPtr<ID3D12RootSignature> mRootSignature;
 
 	ID3D12DescriptorHeap* descriptorHeaps[1];
@@ -156,8 +139,6 @@ private:
 
 	UINT64 mCurrentFence = 0;
 
-	std::wstring mMainWndCaption = L"d3d App";
-
 	bool mAppPaused = false;
 	bool mResizing = false;
 
@@ -166,4 +147,16 @@ private:
 	DX::XMMATRIX mWorld = DX::XMMatrixIdentity();
 	DX::XMMATRIX mView = DX::XMMatrixIdentity();
 	DX::XMMATRIX mProj = DX::XMMatrixIdentity();
+
+private:
+	GameSetting gameSetting;
+
+	float cameraX = 0;
+	float cameraY = 0;
+
+	float mPhi = DX::XM_PIDIV4;
+	float mTheta = 1.5f * DX::XM_PI;
+	float x = mRadius * sinf(mPhi) * cosf(mTheta);
+	float z = mRadius * sinf(mPhi) * sinf(mTheta);
+	float y = mRadius * cosf(mPhi);
 };
