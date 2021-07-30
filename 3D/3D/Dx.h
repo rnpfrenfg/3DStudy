@@ -98,7 +98,7 @@ private:
 	ID3D12DescriptorHeap* descriptorHeaps[1];
 	ComPtr<ID3D12DescriptorHeap> mCbvHeap;
 #define TempObjectCBType DX::XMFLOAT4X4
-	UploadBuffer mObjectCB;
+	UploadBuffer<DX::XMFLOAT4X4> mObjectCB;
 
 	ComPtr<ID3D12CommandQueue> mCommandQueue;
 	ComPtr<ID3D12CommandAllocator> mCommandAllocator;
@@ -126,7 +126,7 @@ private:
 	int mClientWidth = 800;
 	int mClientHeight = 600;
 
-	int mCurrBackBuffer = 0;
+	UINT mCurrBackBuffer = 0;
 
 	DXGI_FORMAT mBackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	DXGI_FORMAT mDepthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;

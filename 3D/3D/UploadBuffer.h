@@ -2,6 +2,7 @@
 
 #include "include.h"
 
+template<typename T>
 class UploadBuffer
 {
 public:
@@ -15,9 +16,9 @@ public:
 		mMappedData = nullptr;
 	}
 
-	void Init(ID3D12Device* device, UINT elementCount, UINT elementSize, bool isConstant)
+	void Init(ID3D12Device* device, UINT elementCount, bool isConstant)
 	{
-		mWidth = elementCount * elementSize;
+		mWidth = sizeof(T) * elementCount;
 
 		if (isConstant)
 		{
@@ -50,9 +51,9 @@ public:
 		DxThrowIfFailed(mBuffer->Map(0, nullptr, (void**)&mMappedData));
 	}
 
-	void Init(ID3D12Device* device, UINT width, bool isConstant)
+	UINT Size()
 	{
-		Init(device, 1, width, isConstant);
+		return mWidth;
 	}
 
 	void CopyToBuffer(void* ptr)
@@ -61,17 +62,16 @@ public:
 	}
 
 	ComPtr<ID3D12Resource> mBuffer;
-	
+
+private:
+
 	UINT CalcConstantBufferByteSize(UINT byteSize)
 	{
 		return (byteSize + 255) & ~255;
 	}
 
-private:
-
 	BYTE* mMappedData = nullptr;
 
 	UINT mWidth;
-	UINT mElementSize;
 };
 

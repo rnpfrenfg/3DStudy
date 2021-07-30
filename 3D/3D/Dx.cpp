@@ -312,23 +312,27 @@ void Dx::LoadAssets()
 	{
 		const int slots = 1;
 
-		D3D12_DESCRIPTOR_RANGE cbvTable;
-		cbvTable.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-		cbvTable.NumDescriptors = slots;
-		cbvTable.BaseShaderRegister = 0;
-		cbvTable.RegisterSpace = 0;
-		cbvTable.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-
 		D3D12_ROOT_PARAMETER slotRootParameter[slots];
-		for (int i = 0; i < slots; i++)
-		{
-			auto& slot = slotRootParameter[i];
-			slot.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-			slot.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-			slot.DescriptorTable.NumDescriptorRanges = slots;
-			slot.DescriptorTable.pDescriptorRanges = &cbvTable;
 
-			//slot.Constants, descriptor
+		for (int i = 0; i < slots; i++)//hlsl's {register (b0)}
+		{
+			D3D12_DESCRIPTOR_RANGE cbvTable;
+			cbvTable.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+			cbvTable.NumDescriptors = slots;
+			cbvTable.BaseShaderRegister = i;
+			cbvTable.RegisterSpace = 0;
+			cbvTable.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+			for (int i = 0; i < slots; i++)
+			{
+				auto& slot = slotRootParameter[i];
+				slot.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+				slot.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+				slot.DescriptorTable.NumDescriptorRanges = slots;
+				slot.DescriptorTable.pDescriptorRanges = &cbvTable;
+
+				//slot.Constants, descriptor
+			}
 		}
 
 		D3D12_ROOT_SIGNATURE_DESC rootSigDesc;
@@ -441,11 +445,11 @@ void Dx::LoadAssets()
 		DxThrowIfFailed(mDevice->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&mCbvHeap)));
 
 
-		mObjectCB.Init(mDevice.Get(), sizeof(TempObjectCBType), true);
+		mObjectCB.Init(mDevice.Get(), 1, true);
 
 		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
 		cbvDesc.BufferLocation = mObjectCB.mBuffer->GetGPUVirtualAddress();
-		cbvDesc.SizeInBytes = mObjectCB.CalcConstantBufferByteSize(sizeof(TempObjectCBType));
+		cbvDesc.SizeInBytes = mObjectCB.Size();
 
 		mDevice->CreateConstantBufferView(&cbvDesc, mCbvHeap->GetCPUDescriptorHandleForHeapStart());
 	}
@@ -500,6 +504,7 @@ void Dx::LoadAssets()
 
 		delete[] indexList;
 		delete[] vertexList;
+		fin.close();
 	}
 }
 
@@ -613,6 +618,9 @@ void Dx::CalculateFrameStats()
 
 void Dx::Render(const GameTimer& gt)
 {
+
+	FlushCommandQueue();
+
 	DxThrowIfFailed(mCommandAllocator->Reset());
 	DxThrowIfFailed(mCommandList->Reset(mCommandAllocator.Get(), mPSO.Get()));
 
@@ -647,8 +655,6 @@ void Dx::Render(const GameTimer& gt)
 	DxThrowIfFailed(mSwapChain->Present(0, 0));
 
 	mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
-
-	FlushCommandQueue();
 }
 
 void Dx::OnResize()

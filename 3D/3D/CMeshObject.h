@@ -4,6 +4,18 @@
 #include "Vertex.h"
 #include "UploadBuffer.h"
 
+struct Material
+{
+	std::string name;
+	int cbIndex;
+	int diffuseSrvHeapIndex;//chapter 9, todo
+	int numFramesDirty;
+	DX::XMFLOAT4 diffuseAlbedo = { 1.0f,1.0f,1.0f,1.0f };
+	DX::XMFLOAT3 fresnelR0 = { 0.01f, 0.01f, 0.01f };
+	float roughness = 0.25f;
+	//DX::XMFLOAT4X4 matTransform = DX::XMMatrixIdentity();
+};
+
 class CMeshObject
 {
 public:
@@ -16,18 +28,16 @@ public:
 		using DX::XMFLOAT4;
 		namespace Colors = DX::Colors;
 
-		UINT size = sizeof(Vertex) * triangles;
-		mVertexBuffer.Init(device.Get(), size, false);
+		mVertexBuffer.Init(device.Get(), triangles, false);
 		mVertexBuffer.CopyToBuffer(triangleVertices);
 		mVertexBufferView.BufferLocation = mVertexBuffer.mBuffer->GetGPUVirtualAddress();
 		mVertexBufferView.StrideInBytes = sizeof(Vertex);
-		mVertexBufferView.SizeInBytes = size;
+		mVertexBufferView.SizeInBytes = mVertexBuffer.Size();
 
-		size = sizeof(UINT32) * indexes;
-		mIndexBuffer.Init(device.Get(), size, false);
+		mIndexBuffer.Init(device.Get(), indexes, false);
 		mIndexBuffer.CopyToBuffer(indexList);
 		mIndexBufferView.BufferLocation = mIndexBuffer.mBuffer->GetGPUVirtualAddress();
-		mIndexBufferView.SizeInBytes = size;
+		mIndexBufferView.SizeInBytes = mIndexBuffer.Size();
 		mIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
 
 		bundle.Init(device, pso);
@@ -49,8 +59,8 @@ public:
 private:
 	ComPtr<ID3D12Device> device;
 
-	UploadBuffer mVertexBuffer;
-	UploadBuffer mIndexBuffer;
+	UploadBuffer<Vertex> mVertexBuffer;
+	UploadBuffer<UINT32> mIndexBuffer;
 	D3D12_VERTEX_BUFFER_VIEW mVertexBufferView;
 	D3D12_INDEX_BUFFER_VIEW mIndexBufferView;
 
