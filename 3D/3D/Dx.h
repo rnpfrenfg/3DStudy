@@ -110,6 +110,7 @@ private:
 	ComPtr<ID3D12DescriptorHeap> mRtvHeap;
 	ComPtr<ID3D12DescriptorHeap> mDsvHeap;
 
+	Mesh skullMesh;
 	CMeshObject meshTest;
 
 	ComPtr<ID3D12PipelineState> mPSO = nullptr;

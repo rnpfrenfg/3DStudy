@@ -4,30 +4,13 @@
 #include "Vertex.h"
 #include "UploadBuffer.h"
 
-struct Material
-{
-	std::string name;
-	int cbIndex;
-	int diffuseSrvHeapIndex;//chapter 9, todo
-	int numFramesDirty;
-	DX::XMFLOAT4 diffuseAlbedo = { 1.0f,1.0f,1.0f,1.0f };
-	DX::XMFLOAT3 fresnelR0 = { 0.01f, 0.01f, 0.01f };
-	float roughness = 0.25f;
-	//DX::XMFLOAT4X4 matTransform = DX::XMMatrixIdentity();
-};
+#include "include.h"
 
-class CMeshObject
+struct Mesh
 {
 public:
-
 	void Init(ComPtr<ID3D12Device> device, ComPtr<ID3D12PipelineState> pso, D3D12_PRIMITIVE_TOPOLOGY topology, Vertex* triangleVertices, int triangles, UINT32* indexList, int indexes)
 	{
-		this->device = device;
-
-		using DX::XMFLOAT3;
-		using DX::XMFLOAT4;
-		namespace Colors = DX::Colors;
-
 		mVertexBuffer.Init(device.Get(), triangles, false);
 		mVertexBuffer.CopyToBuffer(triangleVertices);
 		mVertexBufferView.BufferLocation = mVertexBuffer.mBuffer->GetGPUVirtualAddress();
@@ -54,16 +37,33 @@ public:
 		}
 	}
 
-	CommandBundle bundle;
-
-private:
-	ComPtr<ID3D12Device> device;
-
 	UploadBuffer<Vertex> mVertexBuffer;
 	UploadBuffer<UINT32> mIndexBuffer;
 	D3D12_VERTEX_BUFFER_VIEW mVertexBufferView;
 	D3D12_INDEX_BUFFER_VIEW mIndexBufferView;
 
-	D3D12_PRIMITIVE_TOPOLOGY mTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	CommandBundle bundle;
 };
 
+class CMeshObject
+{
+public:
+
+	void BuildMAKKTRIS()
+	{
+		MAKKTRIS = DX::XMMatrixIdentity();
+		// MAKKTRIS = DX::XMMatrixScaling(scale, scale, scale) * DX::XMMatrixTranslation(x, y, z);
+		//MAKKTRIS = DX::XMMatrixTranspose(MAKKTRIS);
+	}
+
+	Mesh* mesh;
+
+	float x;
+	float y;
+	float z;
+	float scale = 1;
+
+	DX::XMMATRIX MAKKTRIS;
+
+private:
+};

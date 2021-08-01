@@ -500,7 +500,10 @@ void Dx::LoadAssets()
 			fin >> indexList[i];
 		}
 
-		meshTest.Init(mDevice, mPSO, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, vertexList, vertexes, indexList, 3 * indexes);
+		skullMesh.Init(mDevice, mPSO, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, vertexList, vertexes, indexList, 3 * indexes);
+
+		meshTest.mesh = &skullMesh;
+
 
 		delete[] indexList;
 		delete[] vertexList;
@@ -642,7 +645,7 @@ void Dx::Render(const GameTimer& gt)
 
 	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 	mCommandList->ExecuteBundle(mDefaultGraphicsBundle.mCommandList.Get());
-	mCommandList->ExecuteBundle(meshTest.bundle.mCommandList.Get());
+	mCommandList->ExecuteBundle(meshTest.mesh->bundle.mCommandList.Get());
 
 	Transition(barrier, CurrentBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 	mCommandList->ResourceBarrier(1, &barrier);
