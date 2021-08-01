@@ -10,6 +10,24 @@
 
 #include <fstream>
 
+struct FrameResource
+{
+	DX::XMMATRIX world;
+};
+
+struct ObjectConstants
+{
+	DX::XMMATRIX world;
+	DX::XMMATRIX posNscaleNrotate;
+};
+
+struct MaterialConstants
+{
+	DX::XMFLOAT4 diffuseAlbedo;
+	DX::XMFLOAT3 fresnelR0;
+	float Roughness = 0.25;
+};
+
 class Dx
 {
 public:
@@ -19,6 +37,7 @@ public:
 	LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 private:
+
 	bool InitMainWindow();
 
 	void CalculateFrameStats();
@@ -92,13 +111,18 @@ private:
 	ComPtr<IDXGIFactory4> mFactory;
 	ComPtr<IDXGISwapChain> mSwapChain;
 	ComPtr<ID3D12Device> mDevice;
-		
+
 	ComPtr<ID3D12RootSignature> mRootSignature;
 
-	ID3D12DescriptorHeap* descriptorHeaps[1];
-	ComPtr<ID3D12DescriptorHeap> mCbvHeap;
-#define TempObjectCBType DX::XMFLOAT4X4
-	UploadBuffer<DX::XMFLOAT4X4> mObjectCB;
+	Mesh skullMesh;
+	std::vector<CMeshObject> mMeshObjects;
+	UploadBuffer<ObjectConstants> mObjectCB;
+
+	UploadBuffer<MaterialConstants> mMaterialTestCB;
+
+	FrameResource frameResource;
+	UploadBuffer<FrameResource> mFrameCB;
+
 
 	ComPtr<ID3D12CommandQueue> mCommandQueue;
 	ComPtr<ID3D12CommandAllocator> mCommandAllocator;
@@ -110,11 +134,8 @@ private:
 	ComPtr<ID3D12DescriptorHeap> mRtvHeap;
 	ComPtr<ID3D12DescriptorHeap> mDsvHeap;
 
-	Mesh skullMesh;
-	CMeshObject meshTest;
-
 	ComPtr<ID3D12PipelineState> mPSO = nullptr;
-	
+
 	ComPtr<ID3D12Resource> mDepthStencilBuffer;
 	ComPtr<ID3D12Resource> mRenderTargets[SwapChainBufferCount];
 

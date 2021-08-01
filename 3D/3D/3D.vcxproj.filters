@@ -71,9 +71,6 @@
     <ClCompile Include="Vertex.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="UploadBuffer.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="KeyboardSetting.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>

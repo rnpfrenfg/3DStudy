@@ -15,12 +15,12 @@ public:
 		mVertexBuffer.CopyToBuffer(triangleVertices);
 		mVertexBufferView.BufferLocation = mVertexBuffer.mBuffer->GetGPUVirtualAddress();
 		mVertexBufferView.StrideInBytes = sizeof(Vertex);
-		mVertexBufferView.SizeInBytes = mVertexBuffer.Size();
+		mVertexBufferView.SizeInBytes = mVertexBuffer.Width();
 
 		mIndexBuffer.Init(device.Get(), indexes, false);
 		mIndexBuffer.CopyToBuffer(indexList);
 		mIndexBufferView.BufferLocation = mIndexBuffer.mBuffer->GetGPUVirtualAddress();
-		mIndexBufferView.SizeInBytes = mIndexBuffer.Size();
+		mIndexBufferView.SizeInBytes = mIndexBuffer.Width();
 		mIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
 
 		bundle.Init(device, pso);
@@ -49,11 +49,10 @@ class CMeshObject
 {
 public:
 
-	void BuildMAKKTRIS()
+	void BuildMAKKTRIS()//TODO
 	{
-		MAKKTRIS = DX::XMMatrixIdentity();
-		// MAKKTRIS = DX::XMMatrixScaling(scale, scale, scale) * DX::XMMatrixTranslation(x, y, z);
-		//MAKKTRIS = DX::XMMatrixTranspose(MAKKTRIS);
+		MAKKTRIS = DX::XMMatrixScaling(scale, scale, scale) * DX::XMMatrixTranslation(x, y, z);
+		MAKKTRIS = DX::XMMatrixTranspose(MAKKTRIS);
 	}
 
 	Mesh* mesh;

@@ -161,7 +161,6 @@
     <ClCompile Include="KeyboardSetting.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MMFile.cpp" />
-    <ClCompile Include="UploadBuffer.cpp" />
     <ClCompile Include="Vertex.cpp" />
   </ItemGroup>
   <ItemGroup>

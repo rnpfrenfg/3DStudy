@@ -13,17 +13,18 @@ public:
 		{
 			mBuffer->Unmap(0, nullptr);
 		}
-		mMappedData = nullptr;
 	}
 
 	void Init(ID3D12Device* device, UINT elementCount, bool isConstant)
 	{
-		mWidth = sizeof(T) * elementCount;
+		mElementSize = sizeof(T);
 
-		if (isConstant)
+		if (isConstant == true)
 		{
-			mWidth = CalcConstantBufferByteSize(mWidth);
+			mElementSize = CalcConstantBufferByteSize(mElementSize);
 		}
+
+		mWidth = mElementSize * elementCount;
 
 		D3D12_HEAP_PROPERTIES heapProps;
 		heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
@@ -51,7 +52,12 @@ public:
 		DxThrowIfFailed(mBuffer->Map(0, nullptr, (void**)&mMappedData));
 	}
 
-	UINT Size()
+	UINT ElementSize()
+	{
+		return mElementSize;
+	}
+
+	UINT Width()
 	{
 		return mWidth;
 	}
@@ -59,6 +65,11 @@ public:
 	void CopyToBuffer(void* ptr)
 	{
 		memcpy(mMappedData, ptr, mWidth);
+	}
+
+	void CopyToBuffer(int index, void* ptr)
+	{
+		memcpy(&mMappedData[index * mElementSize], ptr, sizeof(T));
 	}
 
 	ComPtr<ID3D12Resource> mBuffer;
@@ -73,5 +84,6 @@ private:
 	BYTE* mMappedData = nullptr;
 
 	UINT mWidth;
+	UINT mElementSize;
 };
 

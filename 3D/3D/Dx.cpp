@@ -92,7 +92,7 @@ LRESULT Dx::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		WORD newX = LOWORD(lParam);
 		float difX = newX - mouseX;
 		difX = DX::XMConvertToRadians(difX * gameSetting.mouseSensivity);
-		
+
 		WORD newY = HIWORD(lParam);
 		float difY = newY - mouseY;
 		difY = DX::XMConvertToRadians(difY * gameSetting.mouseSensivity);
@@ -103,7 +103,7 @@ LRESULT Dx::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		mouseY = newY;
 
 	}
-		return 0;
+	return 0;
 	case WM_CHAR:
 		std::cout << (char)wParam;
 		switch ((char)wParam)
@@ -217,6 +217,8 @@ bool Dx::InitMainWindow()
 	ShowWindow(mhMainWnd, SW_SHOW);
 	UpdateWindow(mhMainWnd);
 
+	SetWindowPos(mhMainWnd, HWND_TOP, 1000, 400, mClientWidth, mClientHeight, SWP_SHOWWINDOW);
+
 	return true;
 }
 
@@ -310,30 +312,19 @@ void Dx::CCreateRtvAndDsvDescriptorHeaps()
 void Dx::LoadAssets()
 {
 	{
-		const int slots = 1;
+		const int slots = 3;
+		D3D12_ROOT_PARAMETER slotRootParameter[3];//TODO
 
-		D3D12_ROOT_PARAMETER slotRootParameter[slots];
+		slotRootParameter[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+		slotRootParameter[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+		slotRootParameter[0].Descriptor.ShaderRegister = 0;
+		slotRootParameter[0].Descriptor.RegisterSpace = 0;
 
-		for (int i = 0; i < slots; i++)//hlsl's {register (b0)}
-		{
-			D3D12_DESCRIPTOR_RANGE cbvTable;
-			cbvTable.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-			cbvTable.NumDescriptors = slots;
-			cbvTable.BaseShaderRegister = i;
-			cbvTable.RegisterSpace = 0;
-			cbvTable.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+		slotRootParameter[1] = slotRootParameter[0];
+		slotRootParameter[1].Descriptor.ShaderRegister = 1;
 
-			for (int i = 0; i < slots; i++)
-			{
-				auto& slot = slotRootParameter[i];
-				slot.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-				slot.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-				slot.DescriptorTable.NumDescriptorRanges = slots;
-				slot.DescriptorTable.pDescriptorRanges = &cbvTable;
-
-				//slot.Constants, descriptor
-			}
-		}
+		slotRootParameter[2] = slotRootParameter[0];
+		slotRootParameter[2].Descriptor.ShaderRegister = 2;
 
 		D3D12_ROOT_SIGNATURE_DESC rootSigDesc;
 		rootSigDesc.NumParameters = slots;
@@ -437,21 +428,19 @@ void Dx::LoadAssets()
 	}
 
 	{
-		D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
-		cbvHeapDesc.NumDescriptors = 1;
-		cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-		cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-		cbvHeapDesc.NodeMask = 0;
-		DxThrowIfFailed(mDevice->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&mCbvHeap)));
 
+		mFrameCB.Init(mDevice.Get(), 1, true);
 
-		mObjectCB.Init(mDevice.Get(), 1, true);
+		mObjectCB.Init(mDevice.Get(), 20000, true);//TODO
 
-		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
-		cbvDesc.BufferLocation = mObjectCB.mBuffer->GetGPUVirtualAddress();
-		cbvDesc.SizeInBytes = mObjectCB.Size();
+		mMaterialTestCB.Init(mDevice.Get(), 1, true);
 
-		mDevice->CreateConstantBufferView(&cbvDesc, mCbvHeap->GetCPUDescriptorHandleForHeapStart());
+		MaterialConstants tetst;
+		tetst.diffuseAlbedo = DX::XMFLOAT4(0.2f, 0.6f, 0.6f, 1.0f);
+		tetst.fresnelR0 = DX::XMFLOAT3(0.01f, 0.01f, 0.01f);
+		tetst.Roughness = 0.125f;
+
+		mMaterialTestCB.CopyToBuffer(&tetst);
 	}
 
 	DxThrowIfFailed(mDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&mFence)));
@@ -467,18 +456,20 @@ void Dx::LoadAssets()
 		std::cout.tie(NULL);
 		using std::cout;
 
+		cout << "READ" << '\n';
+
 		std::ifstream fin;
 		fin.open("Models/skull.txt", std::ios::in);
 		if (fin.fail())
 		{
 			DxThrowIfFailed(-1);
 		}
-		
+
 		int vertexes;
 		int indexes;
-		
+
 		fin >> vertexes >> indexes;
-		cout << vertexes <<'\n' << indexes;;
+		cout << vertexes << '\n' << indexes;;
 
 		Vertex* vertexList = new Vertex[vertexes];
 		for (int i = 0; i < vertexes; i++)
@@ -502,12 +493,21 @@ void Dx::LoadAssets()
 
 		skullMesh.Init(mDevice, mPSO, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, vertexList, vertexes, indexList, 3 * indexes);
 
-		meshTest.mesh = &skullMesh;
-
-
 		delete[] indexList;
 		delete[] vertexList;
 		fin.close();
+
+		for (int i = 0; i < 3; i++)
+		{
+			CMeshObject obj;
+			obj.x = obj.z = 10 * i;
+			obj.y = 0;
+			obj.scale = 0.5;
+			obj.mesh = &skullMesh;
+			mMeshObjects.push_back(obj);
+		}
+
+		cout << "END\n";
 	}
 }
 
@@ -519,11 +519,7 @@ void Dx::CCreateCommandBundles()
 		auto& cmdList = mDefaultGraphicsBundle.mCommandList;
 
 		{
-			descriptorHeaps[0] = mCbvHeap.Get();
-			cmdList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-
 			cmdList->SetGraphicsRootSignature(mRootSignature.Get());
-			cmdList->SetGraphicsRootDescriptorTable(0, mCbvHeap->GetGPUDescriptorHandleForHeapStart());
 
 			cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -643,9 +639,20 @@ void Dx::Render(const GameTimer& gt)
 	mCommandList->ClearRenderTargetView(CurrentBackBufferView(), DX::Colors::LightSteelBlue, 0, nullptr);
 	mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
-	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 	mCommandList->ExecuteBundle(mDefaultGraphicsBundle.mCommandList.Get());
-	mCommandList->ExecuteBundle(meshTest.mesh->bundle.mCommandList.Get());
+
+	for (UINT i = 0; i < mMeshObjects.size(); i++)
+	{
+		auto& mesh = mMeshObjects[i];
+
+		mesh.BuildMAKKTRIS();
+		mObjectCB.CopyToBuffer(i, &mesh.MAKKTRIS);
+
+		mCommandList->SetGraphicsRootConstantBufferView(0, mFrameCB.mBuffer->GetGPUVirtualAddress());
+		mCommandList->SetGraphicsRootConstantBufferView(1, mObjectCB.mBuffer->GetGPUVirtualAddress() + mObjectCB.ElementSize() * i);
+
+		mCommandList->ExecuteBundle(mesh.mesh->bundle.mCommandList.Get());
+	}
 
 	Transition(barrier, CurrentBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 	mCommandList->ResourceBarrier(1, &barrier);
@@ -760,9 +767,7 @@ void Dx::Update(const GameTimer& gt)
 	XMMATRIX worldViewProj = mWorld * mMainCamera.mView * mMainCamera.mProj;
 
 	worldViewProj = DX::XMMatrixTranspose(worldViewProj);
-	DX::XMFLOAT4X4 res;
-	DX::XMStoreFloat4x4(&res, worldViewProj);
-	mObjectCB.CopyToBuffer(&res);
+	mFrameCB.CopyToBuffer(&worldViewProj);
 }
 
 void Dx::Set4xMsaaState(bool value)
