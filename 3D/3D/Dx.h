@@ -7,25 +7,45 @@
 #include "CommandBundle.h"
 #include "GameSetting.h"
 #include "GameTimer.h"
+#include "Light.h"
 
 #include <fstream>
 
 struct FrameResource
 {
-	DX::XMMATRIX world;
+	DX::XMMATRIX view;
+	DX::XMMATRIX InvView;
+	DX::XMMATRIX Proj;
+	DX::XMMATRIX InvProj;
+	DX::XMMATRIX ViewProj;
+	DX::XMMATRIX InvViewProj;
+	DX::XMFLOAT3 EyePosW;
+	float cbPerObjectPad1;
+	DX::XMFLOAT2 RenderTargetSize;
+	DX::XMFLOAT2 InvRenderTargetSize;
+	float NearZ;
+	float FarZ;
+	float TotalTime;
+	float DeltaTime;
+
+	DX::XMFLOAT4 AmbientLight;
+
+	Light Lights[MaxLights];
 };
 
 struct ObjectConstants
 {
 	DX::XMMATRIX world;
-	DX::XMMATRIX posNscaleNrotate;
+	DX::XMMATRIX TexTransform;
 };
 
 struct MaterialConstants
 {
-	DX::XMFLOAT4 diffuseAlbedo;
-	DX::XMFLOAT3 fresnelR0;
-	float Roughness = 0.25;
+	DX::XMFLOAT4 DiffuseAlbedo = { 1.0f,1.0f,1.0f,1.0f };
+	DX::XMFLOAT3 FresnelR0 = { 0.01f,0.01f,0.01f };
+	float Roughness = 0.25f;
+
+	DX::XMMATRIX MatTransform = DX::XMMatrixIdentity();
 };
 
 class Dx
@@ -116,12 +136,12 @@ private:
 
 	Mesh skullMesh;
 	std::vector<CMeshObject> mMeshObjects;
-	UploadBuffer<ObjectConstants> mObjectCB;
 
+	UploadBuffer<ObjectConstants> mObjectCB;
 	UploadBuffer<MaterialConstants> mMaterialTestCB;
+	UploadBuffer<FrameResource> mFrameCB;
 
 	FrameResource frameResource;
-	UploadBuffer<FrameResource> mFrameCB;
 
 
 	ComPtr<ID3D12CommandQueue> mCommandQueue;

@@ -5,5 +5,5 @@
 struct Vertex
 {
 	DX::XMFLOAT3 position;
-	DX::XMFLOAT4 color;
+	DX::XMFLOAT3 normal;
 };

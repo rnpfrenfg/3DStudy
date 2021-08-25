@@ -147,6 +147,7 @@
     <ClInclude Include="GameTimer.h" />
     <ClInclude Include="include.h" />
     <ClInclude Include="KeyboardSetting.h" />
+    <ClInclude Include="Light.h" />
     <ClInclude Include="MMFile.h" />
     <ClInclude Include="UploadBuffer.h" />
     <ClInclude Include="Vertex.h" />

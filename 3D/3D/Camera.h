@@ -57,7 +57,7 @@ public:
 	{
 		if (CameraMode::Look == mode)
 		{
-			DX::XMVECTOR target = DX::XMVectorSet(DX::XMScalarSin(mX), mY, DX::XMScalarCos(mX), 0);
+			target = DX::XMVectorSet(DX::XMScalarSin(mX), mY, DX::XMScalarCos(mX), 0);
 			target = DX::XMVectorAdd(mPos, target);
 
 			mUp = DX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
@@ -76,7 +76,7 @@ public:
 
 	void SetProj(float width, float height)
 	{
-		mProj = DX::XMMatrixPerspectiveFovLH(0.25 * DX::XM_PI, width / height, 1, 10000);
+		mProj = DX::XMMatrixPerspectiveFovLH(0.25 * DX::XM_PI, width / height, mNearZ, mFarZ);
 	}
 
 	CameraMode mode = CameraMode::Look;
@@ -91,5 +91,11 @@ public:
 
 	DX::XMMATRIX mProj;
 	DX::XMMATRIX mView;
+
+	float mNearZ = 1;
+	float mFarZ = 100000;
+
+
+	DX::XMVECTOR target;
 };
 

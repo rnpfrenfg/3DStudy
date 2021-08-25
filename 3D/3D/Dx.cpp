@@ -312,8 +312,8 @@ void Dx::CCreateRtvAndDsvDescriptorHeaps()
 void Dx::LoadAssets()
 {
 	{
-		const int slots = 3;
-		D3D12_ROOT_PARAMETER slotRootParameter[3];//TODO
+		enum{slots = 3};
+		D3D12_ROOT_PARAMETER slotRootParameter[slots];
 
 		slotRootParameter[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 		slotRootParameter[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
@@ -351,18 +351,21 @@ void Dx::LoadAssets()
 		ComPtr<ID3DBlob> vertexShader;
 		ComPtr<ID3DBlob> pixelShader;
 
-		DxThrowIfFailed(D3DCompileFromFile(L"shaders.txt", nullptr, nullptr, "VS", "vs_5_0", compileFlags, 0, &vertexShader, nullptr));
-		DxThrowIfFailed(D3DCompileFromFile(L"shaders.txt", nullptr, nullptr, "PS", "ps_5_0", compileFlags, 0, &pixelShader, nullptr));
+		DxThrowIfFailed(D3DCompileFromFile(L"shaders.txt", nullptr, nullptr, "VS", "vs_5_1", compileFlags, 0, &vertexShader, nullptr));
+		DxThrowIfFailed(D3DCompileFromFile(L"shaders.txt", nullptr, nullptr, "PS", "ps_5_1", compileFlags, 0, &pixelShader, nullptr));
 
 		D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
 		{
 			{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,0,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0 },
-			{"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0,12,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0 },
+			{"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,12,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0 },
+			{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
 		};
 
-		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
+		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = { 0, };
 		psoDesc.InputLayout.NumElements = _countof(inputElementDescs);
 		psoDesc.InputLayout.pInputElementDescs = inputElementDescs;
+
+
 		psoDesc.pRootSignature = mRootSignature.Get();
 
 #define C_ADD_SHADER(a,b) psoDesc.a.pShaderBytecode = b->GetBufferPointer(); psoDesc.a.BytecodeLength = b->GetBufferSize();
@@ -436,8 +439,8 @@ void Dx::LoadAssets()
 		mMaterialTestCB.Init(mDevice.Get(), 1, true);
 
 		MaterialConstants tetst;
-		tetst.diffuseAlbedo = DX::XMFLOAT4(0.2f, 0.6f, 0.6f, 1.0f);
-		tetst.fresnelR0 = DX::XMFLOAT3(0.01f, 0.01f, 0.01f);
+		tetst.DiffuseAlbedo = DX::XMFLOAT4(0.2f, 0.6f, 0.6f, 1.0f);
+		tetst.FresnelR0 = DX::XMFLOAT3(0.01f, 0.01f, 0.01f);
 		tetst.Roughness = 0.125f;
 
 		mMaterialTestCB.CopyToBuffer(&tetst);
@@ -478,12 +481,9 @@ void Dx::LoadAssets()
 			fin >> vertexList[i].position.y;
 			fin >> vertexList[i].position.z;
 
-			vertexList[i].color = { 1,1,1,1 };
-
-			float temp;
-			fin >> temp;
-			fin >> temp;
-			fin >> temp;
+			fin >> vertexList[i].normal.x;
+			fin >> vertexList[i].normal.y;
+			fin >> vertexList[i].normal.z;
 		}
 		UINT32* indexList = new UINT32[indexes * 3];
 		for (int i = 0; i < indexes * 3; i++)
@@ -641,6 +641,9 @@ void Dx::Render(const GameTimer& gt)
 
 	mCommandList->ExecuteBundle(mDefaultGraphicsBundle.mCommandList.Get());
 
+	mCommandList->SetGraphicsRootConstantBufferView(2, mFrameCB.mBuffer->GetGPUVirtualAddress());
+	mCommandList->SetGraphicsRootConstantBufferView(1, mMaterialTestCB.mBuffer->GetGPUVirtualAddress());
+
 	for (UINT i = 0; i < mMeshObjects.size(); i++)
 	{
 		auto& mesh = mMeshObjects[i];
@@ -648,8 +651,7 @@ void Dx::Render(const GameTimer& gt)
 		mesh.BuildMAKKTRIS();
 		mObjectCB.CopyToBuffer(i, &mesh.MAKKTRIS);
 
-		mCommandList->SetGraphicsRootConstantBufferView(0, mFrameCB.mBuffer->GetGPUVirtualAddress());
-		mCommandList->SetGraphicsRootConstantBufferView(1, mObjectCB.mBuffer->GetGPUVirtualAddress() + mObjectCB.ElementSize() * i);
+		mCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB.mBuffer->GetGPUVirtualAddress() + mObjectCB.ElementSize() * i);
 
 		mCommandList->ExecuteBundle(mesh.mesh->bundle.mCommandList.Get());
 	}
@@ -763,11 +765,45 @@ void Dx::Update(const GameTimer& gt)
 	mMainCamera.SetPos(x, y, z);
 	mMainCamera.SetView();
 
-
 	XMMATRIX worldViewProj = mWorld * mMainCamera.mView * mMainCamera.mProj;
 
 	worldViewProj = DX::XMMatrixTranspose(worldViewProj);
-	mFrameCB.CopyToBuffer(&worldViewProj);
+
+	{
+
+		XMMATRIX view = mMainCamera.mView;
+		XMMATRIX proj = mProj;
+
+		XMMATRIX viewProj = view * proj;
+		XMMATRIX invView = DX::XMMatrixInverse(nullptr, view);//TODO maybe error because different with book
+		XMMATRIX invProj = DX::XMMatrixInverse(nullptr, proj);
+		XMMATRIX invViewProj = DX::XMMatrixInverse(nullptr, viewProj);
+
+		frameResource.view = DX::XMMatrixTranspose(view);
+		frameResource.InvView = DX::XMMatrixTranspose(invView);
+		frameResource.Proj = DX::XMMatrixTranspose(proj);
+		frameResource.InvProj = DX::XMMatrixTranspose(invProj);
+		frameResource.ViewProj = DX::XMMatrixTranspose(viewProj);
+		frameResource.InvViewProj = DX::XMMatrixTranspose(invViewProj);
+
+		DX::XMStoreFloat3(&frameResource.EyePosW, mMainCamera.target);
+		frameResource.RenderTargetSize = DX::XMFLOAT2(mClientWidth, mClientHeight);
+		frameResource.InvRenderTargetSize = DX::XMFLOAT2(1.0f / mClientWidth, 1.0f / mClientHeight);
+		frameResource.NearZ = mMainCamera.mNearZ;
+		frameResource.FarZ = mMainCamera.mFarZ;
+		frameResource.TotalTime = mTimer.TotalTime();
+		frameResource.DeltaTime = mTimer.DeltaTime();
+		
+		frameResource.AmbientLight = { 0.25f,0.25f,0.35f,1.0f };
+		frameResource.Lights[0].Direction = { 0.57735f, -0.57735f, 0.57735f };
+		frameResource.Lights[0].Strength = { 0.6f,0.6f,0.6f };
+		frameResource.Lights[1].Direction = { -0.57735f, -0.57735f, 0.57735f };
+		frameResource.Lights[1].Strength = { 0.3f,0.3f,0.3f };
+		frameResource.Lights[2].Direction = { 0.0f,-0.707f,-0.707f };
+		frameResource.Lights[2].Strength = { 0.15f,0.15f,0.15f };
+
+		mFrameCB.CopyToBuffer(&frameResource);
+	}
 }
 
 void Dx::Set4xMsaaState(bool value)
