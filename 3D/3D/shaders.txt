@@ -260,6 +260,9 @@ float4 PS(VertexOut pin) : SV_Target
     // Common convention to take alpha from diffuse material.
     litColor.a = gDiffuseAlbedo.a;
 
-    return float4(litColor.x,0,0,litColor.z);//빨간빛만 방출하는 연습문제
-    //return litColor;
+    int4 test = litColor * 2;
+    litColor = test;
+    litColor /= 2;
+
+    return litColor;
 }
