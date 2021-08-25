@@ -774,7 +774,7 @@ void Dx::Update(const GameTimer& gt)
 		XMMATRIX view = mMainCamera.mView;
 		XMMATRIX proj = mProj;
 
-		XMMATRIX viewProj = view * proj;
+		XMMATRIX viewProj = mWorld * mMainCamera.mView * mMainCamera.mProj;
 		XMMATRIX invView = DX::XMMatrixInverse(nullptr, view);//TODO maybe error because different with book
 		XMMATRIX invProj = DX::XMMatrixInverse(nullptr, proj);
 		XMMATRIX invViewProj = DX::XMMatrixInverse(nullptr, viewProj);
