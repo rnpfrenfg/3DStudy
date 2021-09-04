@@ -248,7 +248,7 @@ void Dx::InitDirectX()
 
 	DxThrowIfFailed(mDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&mCommandAllocator)));
 	DxThrowIfFailed(mDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, mCommandAllocator.Get(), mPSO.Get(), IID_PPV_ARGS(&mCommandList)));
-	
+
 	{//LoadTextures
 
 		DxThrowIfFailed(CTexture::ReadFromDDSFile(L"stone.dds", mCommandList, mDevice, testTex));
@@ -256,15 +256,15 @@ void Dx::InitDirectX()
 		mTextureRegisterHandle = mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 
 		auto desc = testTex.resource->GetDesc();
-		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc;
+		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 		srvDesc.Format = testTex.resource->GetDesc().Format;
 		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 		srvDesc.Texture2D.MostDetailedMip = 0;
 		srvDesc.Texture2D.MipLevels = testTex.resource->GetDesc().MipLevels;
 		srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
-		
-		//mDevice->CreateShaderResourceView(testTex.resource.Get(), &srvDesc, mTextureRegisterHandle);
+
+		mDevice->CreateShaderResourceView(testTex.resource.Get(), &srvDesc, mTextureRegisterHandle);
 	}
 
 	HRESULT hr = mDevice->GetDeviceRemovedReason();
@@ -755,8 +755,6 @@ void Dx::Render(const GameTimer& gt)
 
 	mCommandList->SetGraphicsRootDescriptorTable(0, tex);
 
-	mCommandList->SetGraphicsRootDescriptorTable(0, tex);
-
 	for (UINT i = 0; i < mMeshObjects.size(); i++)
 	{
 		auto& mesh = mMeshObjects[i];
@@ -903,7 +901,7 @@ void Dx::Update(const GameTimer& gt)
 		frameResource.FarZ = mMainCamera.mFarZ;
 		frameResource.TotalTime = mTimer.TotalTime();
 		frameResource.DeltaTime = mTimer.DeltaTime();
-		
+
 		frameResource.AmbientLight = { 0.25f,0.25f,0.35f,1.0f };
 		frameResource.Lights[0].Direction = { 0.57735f, -0.57735f, 0.57735f };
 		frameResource.Lights[0].Strength = { 0.6f,0.6f,0.6f };
