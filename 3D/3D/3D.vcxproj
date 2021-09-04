@@ -140,8 +140,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="CD3DX12_ROOT_PARAMETER.h" />
     <ClInclude Include="CMeshObject.h" />
     <ClInclude Include="CommandBundle.h" />
+    <ClInclude Include="CTexture.h" />
     <ClInclude Include="Dx.h" />
     <ClInclude Include="GameSetting.h" />
     <ClInclude Include="GameTimer.h" />
@@ -149,6 +151,7 @@
     <ClInclude Include="KeyboardSetting.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="MMFile.h" />
+    <ClInclude Include="tempd3dx.h" />
     <ClInclude Include="UploadBuffer.h" />
     <ClInclude Include="Vertex.h" />
   </ItemGroup>
@@ -156,6 +159,8 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CMeshObject.cpp" />
     <ClCompile Include="CommandBundle.cpp" />
+    <ClCompile Include="CTexture.cpp" />
+    <ClCompile Include="ReadFromDDSFile.cpp" />
     <ClCompile Include="Dx.cpp" />
     <ClCompile Include="GameSetting.cpp" />
     <ClCompile Include="GameTimer.cpp" />

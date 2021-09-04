@@ -14,7 +14,7 @@ public:
 
 	void Close();
 
-	void* Read(const wchar_t* path);
+	void* Read(const wchar_t* p, DWORD desiredAccess1 = GENERIC_READ, DWORD fileProtect = PAGE_READONLY, DWORD desiredAccess2 = FILE_MAP_READ);
 
 	void* Ptr();
 

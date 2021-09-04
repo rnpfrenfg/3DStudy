@@ -8,8 +8,11 @@
 #include "GameSetting.h"
 #include "GameTimer.h"
 #include "Light.h"
+#include "CTexture.h"
 
 #include <fstream>
+
+#include "tempd3dx.h"
 
 struct FrameResource
 {
@@ -57,10 +60,7 @@ public:
 	LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 private:
-
 	bool InitMainWindow();
-
-	void CalculateFrameStats();
 
 	HINSTANCE mhAppInst;
 	HWND mhMainWnd;
@@ -95,16 +95,18 @@ public:
 
 private:
 
-	void FlushCommandQueue();
+	void InitDirectX();
 
-	void LoadPipeline();
-	void GetHardwareAdapter(IDXGIFactory4* pFactory, IDXGIAdapter1** ppAdapter);
+	void CCreateDevice();
+	void BuildPSO();
+	void BuildRootSignature();
+	void BuildDescriptorHeap();
+	void InitConstantBuffers();
+	void InitCmdBundles();
+	void LoadModels();
 	void CCreateSwapChain();
 	void CCreateCommandQueue(ComPtr<ID3D12CommandQueue>& que);
 	void CCreateRtvAndDsvDescriptorHeaps();
-
-	void LoadAssets();
-	void CCreateCommandBundles();
 
 	D3D12_CPU_DESCRIPTOR_HANDLE CurrentBackBufferView()
 	{
@@ -118,7 +120,18 @@ private:
 		return mDsvHeap->GetCPUDescriptorHandleForHeapStart();
 	}
 
+	void FlushCommandQueue();
+	void CalculateFrameStats();
+	void GetHardwareAdapter(IDXGIFactory4* pFactory, IDXGIAdapter1** ppAdapter);
+
 private:
+
+	//TODO
+
+	D3D12_CPU_DESCRIPTOR_HANDLE mTextureRegisterHandle;
+	ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap;
+
+
 
 	Camera mMainCamera;
 
@@ -127,6 +140,8 @@ private:
 	enum { SwapChainBufferCount = 2 };
 	const float mMinDepth = 0.0f;
 	const float mMaxDepth = 1.0f;
+	
+	UINT mCbvSrvDescriptorSize = 0;
 
 	ComPtr<IDXGIFactory4> mFactory;
 	ComPtr<IDXGISwapChain> mSwapChain;
@@ -140,6 +155,8 @@ private:
 	UploadBuffer<ObjectConstants> mObjectCB;
 	UploadBuffer<MaterialConstants> mMaterialTestCB;
 	UploadBuffer<FrameResource> mFrameCB;
+
+	CTexture testTex;
 
 	FrameResource frameResource;
 

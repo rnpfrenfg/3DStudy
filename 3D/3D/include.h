@@ -28,6 +28,7 @@ using MS::WRL::ComPtr;
 #include <tchar.h>
 
 #include <algorithm>
+#include <array>
 #include <list>
 #include <string>
 #include <vector>
@@ -42,7 +43,7 @@ using MS::WRL::ComPtr;
 #define CDEBUG DEBUG|_DEBUG
 
 #if CDEBUG
-#define DxThrowIfFailed(x) if(FAILED(x)){std::cout<<"[Error::"<<x<<"] At " <<__FILE__<<" :: "<<__LINE__ <<'\n';while(true);}
+#define DxThrowIfFailed(x) if(FAILED(x)){std::cout<<"[Error::"<<std::hex<<x<<std::dec<<"] At " <<__FILE__<<" :: "<<__LINE__ <<'\n';while(true);}
 #else
 #define DxThrowIfFailed(x) if(FAILED(x)){exit(0);}
 #endif
