@@ -144,6 +144,7 @@
     <ClInclude Include="CMeshObject.h" />
     <ClInclude Include="CommandBundle.h" />
     <ClInclude Include="CTexture.h" />
+    <ClInclude Include="CTextureManager.h" />
     <ClInclude Include="Dx.h" />
     <ClInclude Include="GameSetting.h" />
     <ClInclude Include="GameTimer.h" />
@@ -160,6 +161,7 @@
     <ClCompile Include="CMeshObject.cpp" />
     <ClCompile Include="CommandBundle.cpp" />
     <ClCompile Include="CTexture.cpp" />
+    <ClCompile Include="CTextureManager.cpp" />
     <ClCompile Include="ReadFromDDSFile.cpp" />
     <ClCompile Include="Dx.cpp" />
     <ClCompile Include="GameSetting.cpp" />

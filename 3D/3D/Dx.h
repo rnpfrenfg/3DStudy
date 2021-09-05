@@ -9,6 +9,7 @@
 #include "GameTimer.h"
 #include "Light.h"
 #include "CTexture.h"
+#include "CTextureManager.h"
 
 #include <fstream>
 
@@ -32,6 +33,11 @@ struct FrameResource
 	float DeltaTime;
 
 	DX::XMFLOAT4 AmbientLight;
+
+	DX::XMFLOAT4 fogColor = { 0.7f,0.7f,0.7f,1.0f };
+	float gFogStart = 5.0f;
+	float dFogRange = 150.0f;
+	DX::XMFLOAT2 cbPerObjectPad2;
 
 	Light Lights[MaxLights];
 };
@@ -100,7 +106,6 @@ private:
 	void CCreateDevice();
 	void BuildPSO();
 	void BuildRootSignature();
-	void BuildDescriptorHeap();
 	void InitConstantBuffers();
 	void InitCmdBundles();
 	void LoadModels();
@@ -124,14 +129,11 @@ private:
 	void CalculateFrameStats();
 	void GetHardwareAdapter(IDXGIFactory4* pFactory, IDXGIAdapter1** ppAdapter);
 
+	void DrawRenderItems(ComPtr<ID3D12GraphicsCommandList>& cmdList, std::vector<CMeshObject>& meshObjects);
+
 private:
 
-	//TODO
-
-	D3D12_CPU_DESCRIPTOR_HANDLE mTextureRegisterHandle;
-	ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap;
-
-
+	CTextureManager texManager;
 
 	Camera mMainCamera;
 
@@ -141,8 +143,6 @@ private:
 	const float mMinDepth = 0.0f;
 	const float mMaxDepth = 1.0f;
 	
-	UINT mCbvSrvDescriptorSize = 0;
-
 	ComPtr<IDXGIFactory4> mFactory;
 	ComPtr<IDXGISwapChain> mSwapChain;
 	ComPtr<ID3D12Device> mDevice;
@@ -151,12 +151,14 @@ private:
 
 	Mesh skullMesh;
 	std::vector<CMeshObject> mMeshObjects;
+	std::vector<CMeshObject> mTransMeshObjects;
 
 	UploadBuffer<ObjectConstants> mObjectCB;
 	UploadBuffer<MaterialConstants> mMaterialTestCB;
 	UploadBuffer<FrameResource> mFrameCB;
 
 	CTexture testTex;
+	CTexture texWirefence;
 
 	FrameResource frameResource;
 
@@ -172,6 +174,7 @@ private:
 	ComPtr<ID3D12DescriptorHeap> mDsvHeap;
 
 	ComPtr<ID3D12PipelineState> mPSO = nullptr;
+	ComPtr<ID3D12PipelineState> mPsoBlend = nullptr;
 
 	ComPtr<ID3D12Resource> mDepthStencilBuffer;
 	ComPtr<ID3D12Resource> mRenderTargets[SwapChainBufferCount];

@@ -239,7 +239,7 @@ void Dx::InitDirectX()
 
 	BuildRootSignature();
 	BuildPSO();
-	BuildDescriptorHeap();
+	DxThrowIfFailed(texManager.Init(mDevice, mCbvSrvUavDescriptorSize));
 
 	InitConstantBuffers();
 	InitCmdBundles();
@@ -252,19 +252,9 @@ void Dx::InitDirectX()
 	{//LoadTextures
 
 		DxThrowIfFailed(CTexture::ReadFromDDSFile(L"sample.dds", mCommandList, mDevice, testTex));
-
-		mTextureRegisterHandle = mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-
-		auto desc = testTex.resource->GetDesc();
-		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-		srvDesc.Format = testTex.resource->GetDesc().Format;
-		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-		srvDesc.Texture2D.MostDetailedMip = 0;
-		srvDesc.Texture2D.MipLevels = testTex.resource->GetDesc().MipLevels;
-		srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
-
-		mDevice->CreateShaderResourceView(testTex.resource.Get(), &srvDesc, mTextureRegisterHandle);
+		texManager.AddTexture(testTex);
+		DxThrowIfFailed(CTexture::ReadFromDDSFile(L"wirefence.dds", mCommandList, mDevice, texWirefence));
+		texManager.AddTexture(texWirefence);
 	}
 
 	HRESULT hr = mDevice->GetDeviceRemovedReason();
@@ -273,6 +263,8 @@ void Dx::InitDirectX()
 	DxThrowIfFailed(mCommandList->Close());
 	mCommandQueue->ExecuteCommandLists(1, (ID3D12CommandList* const*)mCommandList.GetAddressOf());
 	FlushCommandQueue();
+
+	mCommandList->SetGraphicsRootDescriptorTable(0, texManager.mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 
 	LoadModels();
 }
@@ -493,6 +485,23 @@ void Dx::BuildPSO()
 	psoDesc.DSVFormat = mDepthStencilFormat;
 
 	DxThrowIfFailed(mDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&mPSO)));
+
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC transparentPsoDesc = psoDesc;
+
+	D3D12_RENDER_TARGET_BLEND_DESC blendDesc;
+	blendDesc.BlendEnable = true;
+	blendDesc.LogicOp = D3D12_LOGIC_OP_NOOP;
+	blendDesc.LogicOpEnable = false;
+	blendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
+	blendDesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+	blendDesc.BlendOp = D3D12_BLEND_OP_ADD;
+	blendDesc.SrcBlendAlpha = D3D12_BLEND_ONE;
+	blendDesc.DestBlendAlpha = D3D12_BLEND_ZERO;
+	blendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
+	blendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+
+	transparentPsoDesc.BlendState.RenderTarget[0] = blendDesc;
+	DxThrowIfFailed(mDevice->CreateGraphicsPipelineState(&transparentPsoDesc, IID_PPV_ARGS(&mPsoBlend)));
 }
 
 void Dx::BuildRootSignature()
@@ -529,15 +538,6 @@ void Dx::BuildRootSignature()
 	DxThrowIfFailed(D3D12SerializeRootSignature(&rootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1, serializedRootsig.GetAddressOf(), errorBlob.GetAddressOf()));
 	DxThrowIfFailed(mDevice->CreateRootSignature(0, serializedRootsig->GetBufferPointer(), serializedRootsig->GetBufferSize(), IID_PPV_ARGS(&mRootSignature)));
 
-}
-
-void Dx::BuildDescriptorHeap()
-{
-	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-	srvHeapDesc.NumDescriptors = 1;
-	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	DxThrowIfFailed(mDevice->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&mSrvDescriptorHeap)));
 }
 
 void Dx::InitConstantBuffers()
@@ -600,7 +600,7 @@ void Dx::LoadModels()
 		fin >> indexList[i];
 	}
 
-	skullMesh.Init(mDevice, mPSO, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, vertexList, vertexes, indexList, 3 * indexes);
+	skullMesh.Init(mDevice, mPSO, texManager, &testTex, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, vertexList, vertexes, indexList, 3 * indexes);
 
 	delete[] indexList;
 	delete[] vertexList;
@@ -631,14 +631,19 @@ void Dx::LoadModels()
 	tempV[3].TexC = { 1,1 };
 
 	UINT32 tempI[6] = { 0,1,2, 0, 2, 3 };
-
+	
 	CMeshObject temp;
 	temp.mesh = new Mesh;
-	temp.mesh->Init(mDevice, mPSO, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, tempV, _countof(tempV), tempI, 6);
-
-	temp.x = temp.y = temp.z = 5;
+	temp.mesh->Init(mDevice, mPSO, texManager, &testTex, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, tempV, _countof(tempV), tempI, 6);
+	temp.x = 5;
 	temp.scale = 4;
 	mMeshObjects.push_back(temp);
+
+	temp.mesh = new Mesh;
+	temp.mesh->Init(mDevice, mPSO, texManager, &texWirefence, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, tempV, _countof(tempV), tempI, 6);
+	temp.x = 7;
+	mMeshObjects.push_back(temp);
+
 	cout << "END\n";
 }
 
@@ -772,33 +777,16 @@ void Dx::Render(const GameTimer& gt)
 
 	mCommandList->ExecuteBundle(mDefaultGraphicsBundle.mCommandList.Get());
 
-	mCommandList->SetDescriptorHeaps(1, mSrvDescriptorHeap.GetAddressOf());
+	mCommandList->SetDescriptorHeaps(1, texManager.mSrvDescriptorHeap.GetAddressOf());
 
 	mCommandList->SetGraphicsRootConstantBufferView(2, mFrameCB.mBuffer->GetGPUVirtualAddress());
 	mCommandList->SetGraphicsRootConstantBufferView(3, mMaterialTestCB.mBuffer->GetGPUVirtualAddress());
 
+	mCommandList->SetPipelineState(mPSO.Get());
+	DrawRenderItems(mCommandList, mMeshObjects);
 
-	D3D12_GPU_DESCRIPTOR_HANDLE tex = mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
-	//tex.ptr += 0;//TODO index * mCbvSrvUavDescriptorSize
-
-	mCommandList->SetGraphicsRootDescriptorTable(0, tex);
-
-	for (UINT i = 0; i < mMeshObjects.size(); i++)
-	{
-		auto& mesh = mMeshObjects[i];
-
-		ObjectConstants objectCB;
-
-		mesh.BuildMAKKTRIS();
-		objectCB.world = mesh.MAKKTRIS;
-		objectCB.TexTransform = DX::XMMatrixTranspose(objectCB.TexTransform);
-		mObjectCB.CopyToBuffer(i, &objectCB);
-
-		mCommandList->SetGraphicsRootConstantBufferView(1, mObjectCB.mBuffer->GetGPUVirtualAddress() + mObjectCB.ElementSize() * i);
-
-		//mCommandList->SetGraphicsRootDescriptorTable
-		mCommandList->ExecuteBundle(mesh.mesh->bundle.mCommandList.Get());
-	}
+	mCommandList->SetPipelineState(mPsoBlend.Get());
+	DrawRenderItems(mCommandList, mTransMeshObjects);
 
 	Transition(barrier, CurrentBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 	mCommandList->ResourceBarrier(1, &barrier);
@@ -813,9 +801,31 @@ void Dx::Render(const GameTimer& gt)
 	mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
 }
 
+void Dx::DrawRenderItems(ComPtr<ID3D12GraphicsCommandList>& cmdList, std::vector<CMeshObject>& meshObjects)
+{
+	for (UINT i = 0; i < meshObjects.size(); i++)
+	{
+		auto& mesh = meshObjects[i];
+
+		ObjectConstants objectCB;
+
+		mesh.BuildMAKKTRIS();
+		objectCB.world = mesh.MAKKTRIS;
+		objectCB.TexTransform = DX::XMMatrixTranspose(objectCB.TexTransform);
+		mObjectCB.CopyToBuffer(i, &objectCB);
+
+		texManager.SetTexture(cmdList, *mesh.mesh->mTex);
+		cmdList->SetGraphicsRootConstantBufferView(1, mObjectCB.mBuffer->GetGPUVirtualAddress() + mObjectCB.ElementSize() * i);
+
+		cmdList->ExecuteBundle(mesh.mesh->bundle.mCommandList.Get());
+	}
+}
+
 void Dx::OnResize()
 {
 	FlushCommandQueue();
+
+	mMainCamera.SetProj(mClientWidth, mClientHeight);
 
 	mScreenViewport.TopLeftX = 0;
 	mScreenViewport.TopLeftY = 0;

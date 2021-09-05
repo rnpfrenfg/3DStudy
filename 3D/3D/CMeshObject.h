@@ -1,16 +1,21 @@
 #pragma once
 
+#include "include.h"
+
 #include "CommandBundle.h"
 #include "Vertex.h"
 #include "UploadBuffer.h"
-
-#include "include.h"
+#include "CTexture.h"
+#include "CTexture.h"
+#include "CTextureManager.h"
 
 struct Mesh
 {
 public:
-	void Init(ComPtr<ID3D12Device> device, ComPtr<ID3D12PipelineState> pso, D3D12_PRIMITIVE_TOPOLOGY topology, Vertex* triangleVertices, int triangles, UINT32* indexList, int indexes)
+	void Init(ComPtr<ID3D12Device> device, ComPtr<ID3D12PipelineState> pso, CTextureManager& texManager, CTexture* tex, D3D12_PRIMITIVE_TOPOLOGY topology, Vertex* triangleVertices, int triangles, UINT32* indexList, int indexes)
 	{
+		mTex = tex;
+
 		mVertexBuffer.Init(device.Get(), triangles, false);
 		mVertexBuffer.CopyToBuffer(triangleVertices);
 		mVertexBufferView.BufferLocation = mVertexBuffer.mBuffer->GetGPUVirtualAddress();
@@ -33,9 +38,14 @@ public:
 			cmdList->IASetVertexBuffers(0, 1, &mVertexBufferView);
 			cmdList->DrawIndexedInstanced(indexes, 1, 0, 0, 0);
 
+			cmdList->SetDescriptorHeaps(1, texManager.mSrvDescriptorHeap.GetAddressOf());
+			//TODO texManager.DrawTexture(cmdList, tex);
+
 			DxThrowIfFailed(cmdList->Close());
 		}
 	}
+
+	CTexture* mTex;
 
 	UploadBuffer<Vertex> mVertexBuffer;
 	UploadBuffer<UINT32> mIndexBuffer;
@@ -48,6 +58,8 @@ public:
 class CMeshObject
 {
 public:
+
+
 
 	void BuildMAKKTRIS()//TODO
 	{
