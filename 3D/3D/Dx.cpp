@@ -251,7 +251,7 @@ void Dx::InitDirectX()
 
 	{//LoadTextures
 
-		DxThrowIfFailed(CTexture::ReadFromDDSFile(L"stone.dds", mCommandList, mDevice, testTex));
+		DxThrowIfFailed(CTexture::ReadFromDDSFile(L"sample.dds", mCommandList, mDevice, testTex));
 
 		mTextureRegisterHandle = mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 
@@ -550,9 +550,11 @@ void Dx::InitConstantBuffers()
 	mMaterialTestCB.Init(mDevice.Get(), 1, true);
 
 	MaterialConstants tetst;
-	tetst.DiffuseAlbedo = DX::XMFLOAT4(0.2f, 0.6f, 0.6f, 1.0f);
-	tetst.FresnelR0 = DX::XMFLOAT3(0.01f, 0.01f, 0.01f);
-	tetst.Roughness = 0.125f;
+	tetst.DiffuseAlbedo = DX::XMFLOAT4(1, 1, 1, 1);
+	tetst.FresnelR0 = DX::XMFLOAT3(0.05f, 0.05f, 0.05f);
+	tetst.Roughness = 0.3f;
+	tetst.MatTransform = DX::XMMatrixIdentity();
+	tetst.MatTransform = DX::XMMatrixTranspose(tetst.MatTransform);
 
 	mMaterialTestCB.CopyToBuffer(&tetst);
 }
@@ -588,6 +590,9 @@ void Dx::LoadModels()
 		fin >> vertexList[i].normal.x;
 		fin >> vertexList[i].normal.y;
 		fin >> vertexList[i].normal.z;
+
+		vertexList[i].TexC.x = rand() / (float)RAND_MAX;
+		vertexList[i].TexC.y = rand() / (float)RAND_MAX;
 	}
 	UINT32* indexList = new UINT32[indexes * 3];
 	for (int i = 0; i < indexes * 3; i++)
@@ -611,6 +616,29 @@ void Dx::LoadModels()
 		mMeshObjects.push_back(obj);
 	}
 
+	Vertex tempV[4];
+
+	tempV[0].position.x = tempV[0].position.y = tempV[0].position.z = 0;
+	tempV[0].normal = { 0.572276, 0.816877, 0.0721907 };
+	tempV[0].TexC = { 0,1 };
+	tempV[1] = tempV[2] = tempV[3] = tempV[0];
+
+	tempV[1].position.y = 1;
+	tempV[1].TexC = { 0,0 };
+	tempV[2].position.y = tempV[2].position.x = 1;
+	tempV[2].TexC = {1,0 };
+	tempV[3].position.x = 1;
+	tempV[3].TexC = { 1,1 };
+
+	UINT32 tempI[6] = { 0,1,2, 0, 2, 3 };
+
+	CMeshObject temp;
+	temp.mesh = new Mesh;
+	temp.mesh->Init(mDevice, mPSO, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, tempV, _countof(tempV), tempI, 6);
+
+	temp.x = temp.y = temp.z = 5;
+	temp.scale = 4;
+	mMeshObjects.push_back(temp);
 	cout << "END\n";
 }
 
@@ -751,7 +779,7 @@ void Dx::Render(const GameTimer& gt)
 
 
 	D3D12_GPU_DESCRIPTOR_HANDLE tex = mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
-	tex.ptr += 0;//TODO index * mCbvSrvUavDescriptorSize
+	//tex.ptr += 0;//TODO index * mCbvSrvUavDescriptorSize
 
 	mCommandList->SetGraphicsRootDescriptorTable(0, tex);
 
@@ -759,8 +787,12 @@ void Dx::Render(const GameTimer& gt)
 	{
 		auto& mesh = mMeshObjects[i];
 
+		ObjectConstants objectCB;
+
 		mesh.BuildMAKKTRIS();
-		mObjectCB.CopyToBuffer(i, &mesh.MAKKTRIS);
+		objectCB.world = mesh.MAKKTRIS;
+		objectCB.TexTransform = DX::XMMatrixTranspose(objectCB.TexTransform);
+		mObjectCB.CopyToBuffer(i, &objectCB);
 
 		mCommandList->SetGraphicsRootConstantBufferView(1, mObjectCB.mBuffer->GetGPUVirtualAddress() + mObjectCB.ElementSize() * i);
 

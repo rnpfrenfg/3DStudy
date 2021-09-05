@@ -39,7 +39,7 @@ struct FrameResource
 struct ObjectConstants
 {
 	DX::XMMATRIX world;
-	DX::XMMATRIX TexTransform;
+	DX::XMMATRIX TexTransform = DX::XMMatrixIdentity();
 };
 
 struct MaterialConstants
@@ -48,7 +48,7 @@ struct MaterialConstants
 	DX::XMFLOAT3 FresnelR0 = { 0.01f,0.01f,0.01f };
 	float Roughness = 0.25f;
 
-	DX::XMMATRIX MatTransform = DX::XMMatrixIdentity();
+	DX::XMMATRIX MatTransform = DX::XMMatrixScaling(1,1,1);
 };
 
 class Dx
