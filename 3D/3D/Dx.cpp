@@ -250,7 +250,6 @@ void Dx::InitDirectX()
 	DxThrowIfFailed(mDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, mCommandAllocator.Get(), mPSO.Get(), IID_PPV_ARGS(&mCommandList)));
 
 	{//LoadTextures
-
 		DxThrowIfFailed(CTexture::ReadFromDDSFile(L"sample.dds", mCommandList, mDevice, testTex));
 		texManager.AddTexture(testTex);
 		DxThrowIfFailed(CTexture::ReadFromDDSFile(L"wirefence.dds", mCommandList, mDevice, texWirefence));
@@ -640,9 +639,10 @@ void Dx::LoadModels()
 	mMeshObjects.push_back(temp);
 
 	temp.mesh = new Mesh;
-	temp.mesh->Init(mDevice, mPSO, texManager, &texWirefence, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, tempV, _countof(tempV), tempI, 6);
+	temp.mesh->Init(mDevice, mPsoBlend, texManager, &texWirefence, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, tempV, _countof(tempV), tempI, 6);
 	temp.x = 7;
-	mMeshObjects.push_back(temp);
+	temp.scale = 7;
+	mTransMeshObjects.push_back(temp);
 
 	cout << "END\n";
 }
@@ -783,10 +783,12 @@ void Dx::Render(const GameTimer& gt)
 	mCommandList->SetGraphicsRootConstantBufferView(3, mMaterialTestCB.mBuffer->GetGPUVirtualAddress());
 
 	mCommandList->SetPipelineState(mPSO.Get());
-	DrawRenderItems(mCommandList, mMeshObjects);
+
+	UINT start = 0;
+	start = DrawRenderItems(start, mCommandList, mMeshObjects);
 
 	mCommandList->SetPipelineState(mPsoBlend.Get());
-	DrawRenderItems(mCommandList, mTransMeshObjects);
+	start = DrawRenderItems(start, mCommandList, mTransMeshObjects);
 
 	Transition(barrier, CurrentBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 	mCommandList->ResourceBarrier(1, &barrier);
@@ -801,7 +803,7 @@ void Dx::Render(const GameTimer& gt)
 	mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
 }
 
-void Dx::DrawRenderItems(ComPtr<ID3D12GraphicsCommandList>& cmdList, std::vector<CMeshObject>& meshObjects)
+UINT Dx::DrawRenderItems(const UINT startIndex, ComPtr<ID3D12GraphicsCommandList>& cmdList, std::vector<CMeshObject>& meshObjects)
 {
 	for (UINT i = 0; i < meshObjects.size(); i++)
 	{
@@ -812,13 +814,14 @@ void Dx::DrawRenderItems(ComPtr<ID3D12GraphicsCommandList>& cmdList, std::vector
 		mesh.BuildMAKKTRIS();
 		objectCB.world = mesh.MAKKTRIS;
 		objectCB.TexTransform = DX::XMMatrixTranspose(objectCB.TexTransform);
-		mObjectCB.CopyToBuffer(i, &objectCB);
+		mObjectCB.CopyToBuffer(startIndex + i, &objectCB);
 
 		texManager.SetTexture(cmdList, *mesh.mesh->mTex);
-		cmdList->SetGraphicsRootConstantBufferView(1, mObjectCB.mBuffer->GetGPUVirtualAddress() + mObjectCB.ElementSize() * i);
+		cmdList->SetGraphicsRootConstantBufferView(1, mObjectCB.mBuffer->GetGPUVirtualAddress() + mObjectCB.ElementSize() * (i + startIndex));
 
 		cmdList->ExecuteBundle(mesh.mesh->bundle.mCommandList.Get());
 	}
+	return startIndex + sizeof(meshObjects);
 }
 
 void Dx::OnResize()

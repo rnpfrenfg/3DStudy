@@ -129,7 +129,7 @@ private:
 	void CalculateFrameStats();
 	void GetHardwareAdapter(IDXGIFactory4* pFactory, IDXGIAdapter1** ppAdapter);
 
-	void DrawRenderItems(ComPtr<ID3D12GraphicsCommandList>& cmdList, std::vector<CMeshObject>& meshObjects);
+	UINT DrawRenderItems(const UINT startIndex, ComPtr<ID3D12GraphicsCommandList>& cmdList, std::vector<CMeshObject>& meshObjects);
 
 private:
 
