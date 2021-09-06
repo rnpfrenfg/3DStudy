@@ -254,6 +254,8 @@ void Dx::InitDirectX()
 		texManager.AddTexture(testTex);
 		DxThrowIfFailed(CTexture::ReadFromDDSFile(L"wirefence.dds", mCommandList, mDevice, texWirefence));
 		texManager.AddTexture(texWirefence);
+		DxThrowIfFailed(CTexture::ReadFromDDSFile(L"stone.dds", mCommandList, mDevice, texStone));
+		texManager.AddTexture(texStone);
 	}
 
 	HRESULT hr = mDevice->GetDeviceRemovedReason();
@@ -464,7 +466,7 @@ void Dx::BuildPSO()
 	psoDesc.DepthStencilState.DepthEnable = TRUE;
 	psoDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
 	psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
-	psoDesc.DepthStencilState.StencilEnable = TRUE;
+	psoDesc.DepthStencilState.StencilEnable = FALSE;
 	psoDesc.DepthStencilState.StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;
 	psoDesc.DepthStencilState.StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK;
 
@@ -501,6 +503,53 @@ void Dx::BuildPSO()
 
 	transparentPsoDesc.BlendState.RenderTarget[0] = blendDesc;
 	DxThrowIfFailed(mDevice->CreateGraphicsPipelineState(&transparentPsoDesc, IID_PPV_ARGS(&mPsoBlend)));
+
+	D3D12_BLEND_DESC mirrorBlendState = psoDesc.BlendState;
+	mirrorBlendState.RenderTarget[0].RenderTargetWriteMask = 0;
+
+	D3D12_DEPTH_STENCIL_DESC mirrorDSS;
+	mirrorDSS.DepthEnable = true;
+	mirrorDSS.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+	mirrorDSS.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+	mirrorDSS.StencilEnable = true;
+	mirrorDSS.StencilReadMask = 0xff;
+	mirrorDSS.StencilWriteMask = 0xff;
+	mirrorDSS.FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
+	mirrorDSS.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
+	mirrorDSS.FrontFace.StencilPassOp = D3D12_STENCIL_OP_REPLACE;
+	mirrorDSS.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+
+	mirrorDSS.BackFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
+	mirrorDSS.BackFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
+	mirrorDSS.BackFace.StencilPassOp = D3D12_STENCIL_OP_REPLACE;
+	mirrorDSS.BackFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC markMirrorsPsoDesc = psoDesc;
+	markMirrorsPsoDesc.BlendState = mirrorBlendState;
+	markMirrorsPsoDesc.DepthStencilState = mirrorDSS;
+	markMirrorsPsoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
+	DxThrowIfFailed(mDevice->CreateGraphicsPipelineState(&markMirrorsPsoDesc, IID_PPV_ARGS(&mPsoMarkStencilMirrors)));
+
+	D3D12_DEPTH_STENCIL_DESC reflectionDSS;
+	reflectionDSS.DepthEnable = true;
+	reflectionDSS.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+	reflectionDSS.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+	reflectionDSS.StencilEnable = true;
+	reflectionDSS.StencilReadMask = 0xff;
+	reflectionDSS.StencilWriteMask = 0xff;
+
+	reflectionDSS.FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
+	reflectionDSS.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
+	reflectionDSS.FrontFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
+	reflectionDSS.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_EQUAL;
+
+	reflectionDSS.BackFace = reflectionDSS.FrontFace;
+
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC reflectionPsoDesc = psoDesc;
+	reflectionPsoDesc.DepthStencilState = reflectionDSS;
+	reflectionPsoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
+	reflectionPsoDesc.RasterizerState.FrontCounterClockwise = true;
+	DxThrowIfFailed(mDevice->CreateGraphicsPipelineState(&reflectionPsoDesc, IID_PPV_ARGS(&mPsoDrawReflections)));
 }
 
 void Dx::BuildRootSignature()
@@ -542,7 +591,7 @@ void Dx::BuildRootSignature()
 void Dx::InitConstantBuffers()
 {
 
-	mFrameCB.Init(mDevice.Get(), 1, true);
+	mFrameCB.Init(mDevice.Get(), 2, true);
 
 	mObjectCB.Init(mDevice.Get(), 20000, true);//TODO
 
@@ -613,6 +662,9 @@ void Dx::LoadModels()
 		obj.scale = 0.5;
 		obj.mesh = &skullMesh;
 		mMeshObjects.push_back(obj);
+		obj.tempMirror = true;
+		obj.mesh->T__initBundle(obj.mesh->tempMirrorBundle, mDevice, mPsoDrawReflections, texManager);
+		mReflectedObjs.push_back(obj);
 	}
 
 	Vertex tempV[4];
@@ -625,7 +677,7 @@ void Dx::LoadModels()
 	tempV[1].position.y = 1;
 	tempV[1].TexC = { 0,0 };
 	tempV[2].position.y = tempV[2].position.x = 1;
-	tempV[2].TexC = {1,0 };
+	tempV[2].TexC = { 1,0 };
 	tempV[3].position.x = 1;
 	tempV[3].TexC = { 1,1 };
 
@@ -643,6 +695,17 @@ void Dx::LoadModels()
 	temp.x = 7;
 	temp.scale = 7;
 	mTransMeshObjects.push_back(temp);
+	
+	
+
+	//mirror
+	temp.mesh = new Mesh;
+	temp.mesh->Init(mDevice, mPsoMarkStencilMirrors, texManager, &texStone, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, tempV, _countof(tempV), tempI, 6);
+	
+	temp.x = 9;
+	temp.z = -1;
+	temp.scale = 20;
+	mMirrors.push_back(temp);
 
 	cout << "END\n";
 }
@@ -772,23 +835,37 @@ void Dx::Render(const GameTimer& gt)
 	D3D12_CPU_DESCRIPTOR_HANDLE dsView = DepthStencilView();
 	mCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsView);
 
+
 	mCommandList->ClearRenderTargetView(CurrentBackBufferView(), DX::Colors::LightSteelBlue, 0, nullptr);
-	mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-
+	
 	mCommandList->ExecuteBundle(mDefaultGraphicsBundle.mCommandList.Get());
-
 	mCommandList->SetDescriptorHeaps(1, texManager.mSrvDescriptorHeap.GetAddressOf());
 
-	mCommandList->SetGraphicsRootConstantBufferView(2, mFrameCB.mBuffer->GetGPUVirtualAddress());
-	mCommandList->SetGraphicsRootConstantBufferView(3, mMaterialTestCB.mBuffer->GetGPUVirtualAddress());
+	//TODO for(l: Layers) (ex. Game layer, UI layer......)
+	{
+		mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+		mCommandList->SetGraphicsRootConstantBufferView(2, mFrameCB.mBuffer->GetGPUVirtualAddress());
 
-	mCommandList->SetPipelineState(mPSO.Get());
+		mCommandList->SetGraphicsRootConstantBufferView(3, mMaterialTestCB.mBuffer->GetGPUVirtualAddress());
 
-	UINT start = 0;
-	start = DrawRenderItems(start, mCommandList, mMeshObjects);
+		UINT start = 0;
+		mCommandList->SetPipelineState(mPSO.Get());
+		start = DrawRenderItems(start, mCommandList, mMeshObjects);
 
-	mCommandList->SetPipelineState(mPsoBlend.Get());
-	start = DrawRenderItems(start, mCommandList, mTransMeshObjects);
+		mCommandList->OMSetStencilRef(1);
+		mCommandList->SetPipelineState(mPsoMarkStencilMirrors.Get());
+		start = DrawRenderItems(start, mCommandList, mMirrors);
+
+		mCommandList->SetGraphicsRootConstantBufferView(2, mFrameCB.mBuffer->GetGPUVirtualAddress() + mFrameCB.ElementSize());
+		mCommandList->SetPipelineState(mPsoDrawReflections.Get());
+		start = DrawRenderItems(start, mCommandList, mReflectedObjs);
+
+		mCommandList->SetGraphicsRootConstantBufferView(2, mFrameCB.mBuffer->GetGPUVirtualAddress());
+		mCommandList->OMSetStencilRef(0);
+
+		mCommandList->SetPipelineState(mPsoBlend.Get());
+		start = DrawRenderItems(start, mCommandList, mTransMeshObjects);
+	}
 
 	Transition(barrier, CurrentBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 	mCommandList->ResourceBarrier(1, &barrier);
@@ -819,7 +896,10 @@ UINT Dx::DrawRenderItems(const UINT startIndex, ComPtr<ID3D12GraphicsCommandList
 		texManager.SetTexture(cmdList, *mesh.mesh->mTex);
 		cmdList->SetGraphicsRootConstantBufferView(1, mObjectCB.mBuffer->GetGPUVirtualAddress() + mObjectCB.ElementSize() * (i + startIndex));
 
-		cmdList->ExecuteBundle(mesh.mesh->bundle.mCommandList.Get());
+		if(mesh.tempMirror)
+			cmdList->ExecuteBundle(mesh.mesh->tempMirrorBundle.mCommandList.Get());
+		else
+			cmdList->ExecuteBundle(mesh.mesh->bundle.mCommandList.Get());
 	}
 	return startIndex + sizeof(meshObjects);
 }
@@ -955,7 +1035,20 @@ void Dx::Update(const GameTimer& gt)
 		frameResource.Lights[2].Direction = { 0.0f,-0.707f,-0.707f };
 		frameResource.Lights[2].Strength = { 0.15f,0.15f,0.15f };
 
-		mFrameCB.CopyToBuffer(&frameResource);
+		mFrameCB.CopyToBuffer(0, &frameResource);
+
+		reflectedFrameResoruce = frameResource;
+		DX::XMVECTOR mirrorPlane = DX::XMVectorSet(0, 0, 1, 0);
+		DX::XMMATRIX R = DX::XMMatrixReflect(mirrorPlane);
+
+		for (int i = 0; i < 3; i++)
+		{
+			DX::XMVECTOR lightDir = XMLoadFloat3(&frameResource.Lights[i].Direction);
+			DX::XMVECTOR reflectedLightDir = DX::XMVector3TransformNormal(lightDir, R);
+			DX::XMStoreFloat3(&reflectedFrameResoruce.Lights[i].Direction, reflectedLightDir);
+		}
+
+		mFrameCB.CopyToBuffer(1, &reflectedFrameResoruce);
 	}
 }
 

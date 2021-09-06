@@ -152,6 +152,8 @@ private:
 	Mesh skullMesh;
 	std::vector<CMeshObject> mMeshObjects;
 	std::vector<CMeshObject> mTransMeshObjects;
+	std::vector<CMeshObject> mMirrors;
+	std::vector<CMeshObject> mReflectedObjs;
 
 	UploadBuffer<ObjectConstants> mObjectCB;
 	UploadBuffer<MaterialConstants> mMaterialTestCB;
@@ -159,9 +161,10 @@ private:
 
 	CTexture testTex;
 	CTexture texWirefence;
+	CTexture texStone;
 
 	FrameResource frameResource;
-
+	FrameResource reflectedFrameResoruce;
 
 	ComPtr<ID3D12CommandQueue> mCommandQueue;
 	ComPtr<ID3D12CommandAllocator> mCommandAllocator;
@@ -175,6 +178,10 @@ private:
 
 	ComPtr<ID3D12PipelineState> mPSO = nullptr;
 	ComPtr<ID3D12PipelineState> mPsoBlend = nullptr;
+
+	//for marking stencil mirrors
+	ComPtr<ID3D12PipelineState> mPsoMarkStencilMirrors = nullptr;
+	ComPtr<ID3D12PipelineState> mPsoDrawReflections = nullptr;
 
 	ComPtr<ID3D12Resource> mDepthStencilBuffer;
 	ComPtr<ID3D12Resource> mRenderTargets[SwapChainBufferCount];
