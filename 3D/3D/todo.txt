@@ -1,0 +1,6 @@
+
+
+
+RenderLayer {PSO, RenderItems; RenderItem(), AddMeshObject(*),};
+
+Object Constants mapping in MeshObject

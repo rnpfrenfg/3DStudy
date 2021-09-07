@@ -53,7 +53,7 @@ float3 BlinnPhong(float3 lightStrength, float3 lightVec, float3 normal, float3 t
     // doing LDR rendering.  So scale it down a bit.
     specAlbedo = specAlbedo / (specAlbedo + 1.0f);
 
-    return (mat.DiffuseAlbedo.rgb + specAlbedo) * lightStrength;
+    return (mat.DiffuseAlbedo + specAlbedo) * lightStrength;
 }
 
 //---------------------------------------------------------------------------------------
@@ -171,9 +171,13 @@ float4 ComputeLighting(Light gLights[MaxLights], Material mat,
 
 //***************************************************************************************
 // Default.hlsl by Frank Luna (C) 2015 All Rights Reserved.
+//
+// Default shader, currently supports lighting.
 //***************************************************************************************
 
+
 Texture2D    gDiffuseMap : register(t0);
+
 
 SamplerState gsamPointWrap        : register(s0);
 SamplerState gsamPointClamp       : register(s1);
@@ -189,7 +193,7 @@ cbuffer cbPerObject : register(b0)
 	float4x4 gTexTransform;
 };
 
-// Constant data that varies per pass.
+// Constant data that varies per material.
 cbuffer cbPass : register(b1)
 {
     float4x4 gView;
@@ -208,8 +212,6 @@ cbuffer cbPass : register(b1)
     float gDeltaTime;
     float4 gAmbientLight;
 
-	// Allow application to change fog parameters once per frame.
-	// For example, we may only use fog for certain times of day.
 	float4 gFogColor;
 	float gFogStart;
 	float gFogRange;
@@ -304,7 +306,7 @@ float4 PS(VertexOut pin) : SV_Target
 #endif
 
     // Common convention to take alpha from diffuse albedo.
-    litColor.a = diffuseAlbedo.a;
+    litColor.a = gDiffuseAlbedo.a;
 
     return litColor;
 }

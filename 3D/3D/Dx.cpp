@@ -491,7 +491,6 @@ void Dx::BuildPSO()
 
 	D3D12_RENDER_TARGET_BLEND_DESC blendDesc;
 	blendDesc.BlendEnable = true;
-	blendDesc.LogicOp = D3D12_LOGIC_OP_NOOP;
 	blendDesc.LogicOpEnable = false;
 	blendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
 	blendDesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
@@ -499,6 +498,7 @@ void Dx::BuildPSO()
 	blendDesc.SrcBlendAlpha = D3D12_BLEND_ONE;
 	blendDesc.DestBlendAlpha = D3D12_BLEND_ZERO;
 	blendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
+	blendDesc.LogicOp = D3D12_LOGIC_OP_NOOP;
 	blendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
 
 	transparentPsoDesc.BlendState.RenderTarget[0] = blendDesc;
@@ -550,6 +550,25 @@ void Dx::BuildPSO()
 	reflectionPsoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
 	reflectionPsoDesc.RasterizerState.FrontCounterClockwise = true;
 	DxThrowIfFailed(mDevice->CreateGraphicsPipelineState(&reflectionPsoDesc, IID_PPV_ARGS(&mPsoDrawReflections)));
+
+	D3D12_DEPTH_STENCIL_DESC shadowDSS;
+	shadowDSS.DepthEnable = true;
+	shadowDSS.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+	shadowDSS.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+	shadowDSS.StencilEnable = true;
+	shadowDSS.StencilReadMask = 0xff;
+	shadowDSS.StencilWriteMask = 0xff;
+
+	shadowDSS.FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
+	shadowDSS.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
+	shadowDSS.FrontFace.StencilPassOp = D3D12_STENCIL_OP_INCR;
+	shadowDSS.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_EQUAL;
+
+	shadowDSS.BackFace = shadowDSS.FrontFace;
+
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC shadowPsoDesc = transparentPsoDesc;
+	shadowPsoDesc.DepthStencilState = shadowDSS;
+	DxThrowIfFailed(mDevice->CreateGraphicsPipelineState(&shadowPsoDesc, IID_PPV_ARGS(&mPsoShadow)));
 }
 
 void Dx::BuildRootSignature()
@@ -595,7 +614,7 @@ void Dx::InitConstantBuffers()
 
 	mObjectCB.Init(mDevice.Get(), 20000, true);//TODO
 
-	mMaterialTestCB.Init(mDevice.Get(), 1, true);
+	mMaterialTestCB.Init(mDevice.Get(), 2, true);
 
 	MaterialConstants tetst;
 	tetst.DiffuseAlbedo = DX::XMFLOAT4(1, 1, 1, 1);
@@ -604,7 +623,15 @@ void Dx::InitConstantBuffers()
 	tetst.MatTransform = DX::XMMatrixIdentity();
 	tetst.MatTransform = DX::XMMatrixTranspose(tetst.MatTransform);
 
-	mMaterialTestCB.CopyToBuffer(&tetst);
+	MaterialConstants shadow;
+	shadow.DiffuseAlbedo = DX::XMFLOAT4(0.0f, 0.0f, 0.0f, 0.5f);
+	shadow.FresnelR0 = DX::XMFLOAT3(0.001f, 0.001f, 0.001f);
+	shadow.Roughness = 0;
+	shadow.MatTransform = DX::XMMatrixIdentity();
+	shadow.MatTransform = DX::XMMatrixTranspose(tetst.MatTransform);
+
+	mMaterialTestCB.CopyToBuffer(0, &tetst);
+	mMaterialTestCB.CopyToBuffer(1, &shadow);
 }
 
 void Dx::LoadModels()
@@ -648,7 +675,7 @@ void Dx::LoadModels()
 		fin >> indexList[i];
 	}
 
-	skullMesh.Init(mDevice, mPSO, texManager, &testTex, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, vertexList, vertexes, indexList, 3 * indexes);
+	skullMesh.Init(mDevice, mPSO, texManager, &texWirefence, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, vertexList, vertexes, indexList, 3 * indexes);
 
 	delete[] indexList;
 	delete[] vertexList;
@@ -662,7 +689,12 @@ void Dx::LoadModels()
 		obj.scale = 0.5;
 		obj.mesh = &skullMesh;
 		mMeshObjects.push_back(obj);
+		obj.tempShadow = true;
 		obj.tempMirror = true;
+		obj.mesh->T__initBundle(obj.mesh->tempMirrorBundle, mDevice, mPsoShadow, texManager);
+		mShwdowObjs.push_back(obj);
+		obj.tempMirror = true;
+		obj.tempShadow = false;
 		obj.mesh->T__initBundle(obj.mesh->tempMirrorBundle, mDevice, mPsoDrawReflections, texManager);
 		mReflectedObjs.push_back(obj);
 	}
@@ -689,14 +721,42 @@ void Dx::LoadModels()
 	temp.x = 5;
 	temp.scale = 4;
 	mMeshObjects.push_back(temp);
+	
+	{
+		Vertex tempV[4];
+
+		tempV[0].position.x = tempV[0].position.y = tempV[0].position.z = 0;
+		tempV[0].normal = { 0.572276, 0.816877, 0.0721907 };
+		tempV[0].TexC = { 0,1 };
+		tempV[1] = tempV[2] = tempV[3] = tempV[0];
+
+		tempV[1].position.z = 1;
+		tempV[1].TexC = { 0,0 };
+		tempV[2].position.z = tempV[2].position.x = 1;
+		tempV[2].TexC = { 1,0 };
+		tempV[3].position.x = 1;
+		tempV[3].TexC = { 1,1 };
+
+		CMeshObject temp;
+		temp.mesh = new Mesh;
+		temp.mesh->Init(mDevice, mPSO, texManager, &testTex, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, tempV, _countof(tempV), tempI, 6);
+		const float tttttt = 50;
+		float div = 1;
+		temp.scale = div;
+		for (float i = -tttttt; i < tttttt; i+= div)
+			for (float j = -tttttt; j < tttttt; j+= div)
+			{
+				temp.x = i;
+				temp.z = j;
+				mMeshObjects.push_back(temp);
+			}
+	}
 
 	temp.mesh = new Mesh;
 	temp.mesh->Init(mDevice, mPsoBlend, texManager, &texWirefence, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, tempV, _countof(tempV), tempI, 6);
 	temp.x = 7;
 	temp.scale = 7;
 	mTransMeshObjects.push_back(temp);
-	
-	
 
 	//mirror
 	temp.mesh = new Mesh;
@@ -845,9 +905,8 @@ void Dx::Render(const GameTimer& gt)
 	{
 		mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 		mCommandList->SetGraphicsRootConstantBufferView(2, mFrameCB.mBuffer->GetGPUVirtualAddress());
-
 		mCommandList->SetGraphicsRootConstantBufferView(3, mMaterialTestCB.mBuffer->GetGPUVirtualAddress());
-
+		//mCommandList->SetGraphicsRootConstantBufferView(3, mMaterialTestCB.mBuffer->GetGPUVirtualAddress() + mMaterialTestCB.ElementSize());
 		UINT start = 0;
 		mCommandList->SetPipelineState(mPSO.Get());
 		start = DrawRenderItems(start, mCommandList, mMeshObjects);
@@ -865,6 +924,11 @@ void Dx::Render(const GameTimer& gt)
 
 		mCommandList->SetPipelineState(mPsoBlend.Get());
 		start = DrawRenderItems(start, mCommandList, mTransMeshObjects);
+
+
+		mCommandList->SetGraphicsRootConstantBufferView(3, mMaterialTestCB.mBuffer->GetGPUVirtualAddress() + mMaterialTestCB.ElementSize());
+		mCommandList->SetPipelineState(mPsoShadow.Get());
+		start = DrawRenderItems(start, mCommandList, mShwdowObjs);
 	}
 
 	Transition(barrier, CurrentBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
@@ -882,13 +946,26 @@ void Dx::Render(const GameTimer& gt)
 
 UINT Dx::DrawRenderItems(const UINT startIndex, ComPtr<ID3D12GraphicsCommandList>& cmdList, std::vector<CMeshObject>& meshObjects)
 {
+	DX::XMVECTOR shadowPlane = DX::XMVectorSet(0, 1, 0, 0);
+	
+	DX::XMFLOAT3 light = frameResource.Lights[0].Direction;
+	light.x = -light.x;
+	light.y = -light.y;
+	light.z = -light.z;
+	DX::XMVECTOR toMainLight = DX::XMLoadFloat3(&light);
+	
+
+
+	DX::XMMATRIX S = DX::XMMatrixShadow(shadowPlane, toMainLight);
+	DX::XMMATRIX shadowOffsetY = DX::XMMatrixTranslation(0, 0.001f, 0);
+
 	for (UINT i = 0; i < meshObjects.size(); i++)
 	{
 		auto& mesh = meshObjects[i];
 
 		ObjectConstants objectCB;
 
-		mesh.BuildMAKKTRIS();
+		mesh.BuildMAKKTRIS(S * shadowOffsetY);
 		objectCB.world = mesh.MAKKTRIS;
 		objectCB.TexTransform = DX::XMMatrixTranspose(objectCB.TexTransform);
 		mObjectCB.CopyToBuffer(startIndex + i, &objectCB);
@@ -1040,6 +1117,7 @@ void Dx::Update(const GameTimer& gt)
 		reflectedFrameResoruce = frameResource;
 		DX::XMVECTOR mirrorPlane = DX::XMVectorSet(0, 0, 1, 0);
 		DX::XMMATRIX R = DX::XMMatrixReflect(mirrorPlane);
+
 
 		for (int i = 0; i < 3; i++)
 		{

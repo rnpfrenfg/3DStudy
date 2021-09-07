@@ -109,5 +109,8 @@
     <Text Include="shaders.txt">
       <Filter>헤더 파일</Filter>
     </Text>
+    <Text Include="todo.txt">
+      <Filter>헤더 파일</Filter>
+    </Text>
   </ItemGroup>
 </Project>

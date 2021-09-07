@@ -92,7 +92,7 @@ public:
 	DX::XMMATRIX mProj;
 	DX::XMMATRIX mView;
 
-	float mNearZ = 1;
+	float mNearZ = 0.01;
 	float mFarZ = 100000;
 
 

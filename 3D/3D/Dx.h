@@ -154,6 +154,7 @@ private:
 	std::vector<CMeshObject> mTransMeshObjects;
 	std::vector<CMeshObject> mMirrors;
 	std::vector<CMeshObject> mReflectedObjs;
+	std::vector<CMeshObject> mShwdowObjs;
 
 	UploadBuffer<ObjectConstants> mObjectCB;
 	UploadBuffer<MaterialConstants> mMaterialTestCB;
@@ -178,10 +179,10 @@ private:
 
 	ComPtr<ID3D12PipelineState> mPSO = nullptr;
 	ComPtr<ID3D12PipelineState> mPsoBlend = nullptr;
-
 	//for marking stencil mirrors
 	ComPtr<ID3D12PipelineState> mPsoMarkStencilMirrors = nullptr;
 	ComPtr<ID3D12PipelineState> mPsoDrawReflections = nullptr;
+	ComPtr<ID3D12PipelineState> mPsoShadow = nullptr;
 
 	ComPtr<ID3D12Resource> mDepthStencilBuffer;
 	ComPtr<ID3D12Resource> mRenderTargets[SwapChainBufferCount];
