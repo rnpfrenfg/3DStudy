@@ -3,7 +3,7 @@
 #include "include.h"
 
 #include "Camera.h"
-#include "CMeshObject.h"
+#include "RenderItem.h"
 #include "CommandBundle.h"
 #include "GameSetting.h"
 #include "GameTimer.h"
@@ -129,7 +129,7 @@ private:
 	void CalculateFrameStats();
 	void GetHardwareAdapter(IDXGIFactory4* pFactory, IDXGIAdapter1** ppAdapter);
 
-	UINT DrawRenderItems(const UINT startIndex, ComPtr<ID3D12GraphicsCommandList>& cmdList, std::vector<CMeshObject>& meshObjects);
+	UINT DrawRenderItems(const UINT startIndex, ComPtr<ID3D12GraphicsCommandList>& cmdList, std::vector<RenderItem>& meshObjects);
 
 private:
 
@@ -150,11 +150,11 @@ private:
 	ComPtr<ID3D12RootSignature> mRootSignature;
 
 	Mesh skullMesh;
-	std::vector<CMeshObject> mMeshObjects;
-	std::vector<CMeshObject> mTransMeshObjects;
-	std::vector<CMeshObject> mMirrors;
-	std::vector<CMeshObject> mReflectedObjs;
-	std::vector<CMeshObject> mShwdowObjs;
+	std::vector<RenderItem> mMeshObjects;
+	std::vector<RenderItem> mTransMeshObjects;
+	std::vector<RenderItem> mMirrors;
+	std::vector<RenderItem> mReflectedObjs;
+	std::vector<RenderItem> mShwdowObjs;
 
 	UploadBuffer<ObjectConstants> mObjectCB;
 	UploadBuffer<MaterialConstants> mMaterialTestCB;

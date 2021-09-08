@@ -683,7 +683,7 @@ void Dx::LoadModels()
 
 	for (int i = 0; i < 3; i++)
 	{
-		CMeshObject obj;
+		RenderItem obj;
 		obj.x = obj.z = 10 * i;
 		obj.y = 0;
 		obj.scale = 0.5;
@@ -715,7 +715,7 @@ void Dx::LoadModels()
 
 	UINT32 tempI[6] = { 0,1,2, 0, 2, 3 };
 	
-	CMeshObject temp;
+	RenderItem temp;
 	temp.mesh = new Mesh;
 	temp.mesh->Init(mDevice, mPSO, texManager, &testTex, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, tempV, _countof(tempV), tempI, 6);
 	temp.x = 5;
@@ -737,7 +737,7 @@ void Dx::LoadModels()
 		tempV[3].position.x = 1;
 		tempV[3].TexC = { 1,1 };
 
-		CMeshObject temp;
+		RenderItem temp;
 		temp.mesh = new Mesh;
 		temp.mesh->Init(mDevice, mPSO, texManager, &testTex, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, tempV, _countof(tempV), tempI, 6);
 		const float tttttt = 50;
@@ -944,7 +944,7 @@ void Dx::Render(const GameTimer& gt)
 	mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
 }
 
-UINT Dx::DrawRenderItems(const UINT startIndex, ComPtr<ID3D12GraphicsCommandList>& cmdList, std::vector<CMeshObject>& meshObjects)
+UINT Dx::DrawRenderItems(const UINT startIndex, ComPtr<ID3D12GraphicsCommandList>& cmdList, std::vector<RenderItem>& meshObjects)
 {
 	DX::XMVECTOR shadowPlane = DX::XMVectorSet(0, 1, 0, 0);
 	

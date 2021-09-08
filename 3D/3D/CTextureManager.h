@@ -53,9 +53,9 @@ public:
 
 private:
 	ComPtr<ID3D12Device> mDevice;
-	UINT64 mSrvDescriptorSize;
+	SIZE_T mSrvDescriptorSize;
 
-	UINT64 newTexIndex = 0;
+	SIZE_T newTexIndex = 0;
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC tempDesc = {};
 };

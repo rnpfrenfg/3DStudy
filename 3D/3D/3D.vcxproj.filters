@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="헤더 파일\Setting">
+      <UniqueIdentifier>{bef1d39a-6b3b-4f0b-b5a1-dfee10e7a45d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MMFile.h">
@@ -30,9 +33,6 @@
     <ClInclude Include="CommandBundle.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="CMeshObject.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="Vertex.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
@@ -40,9 +40,6 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="KeyboardSetting.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="GameSetting.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">
@@ -63,6 +60,18 @@
     <ClInclude Include="CTextureManager.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="RenderItem.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderManager.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="GameSetting.h">
+      <Filter>헤더 파일\Setting</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicSetting.h">
+      <Filter>헤더 파일\Setting</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MMFile.cpp">
@@ -80,13 +89,7 @@
     <ClCompile Include="CommandBundle.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="CMeshObject.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="Vertex.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="KeyboardSetting.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="GameSetting.cpp">
@@ -95,13 +98,19 @@
     <ClCompile Include="Camera.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="CTexture.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="ReadFromDDSFile.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="CTextureManager.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="CTexture.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderItem.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderManager.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

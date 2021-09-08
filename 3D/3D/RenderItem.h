@@ -66,28 +66,32 @@ public:
 	int indexes;
 };
 
-class CMeshObject
+class RenderItem
 {
 public:
 
+	bool dirty = true;
 	bool tempShadow;
 	bool tempMirror;
 
 	void BuildMAKKTRIS(DX::FXMMATRIX temp)//TODO
 	{
-		MAKKTRIS = DX::XMMatrixScaling(scale, scale, scale) * DX::XMMatrixTranslation(x, y, z);
+		if (dirty)
+		{
+			MAKKTRIS = DX::XMMatrixScaling(scale, scale, scale) * DX::XMMatrixTranslation(x, y, z);
 
-		if (tempShadow)
-		{
-			MAKKTRIS *= temp;
+			if (tempShadow)
+			{
+				MAKKTRIS *= temp;
+			}
+			else if (tempMirror)
+			{
+				DX::XMVECTOR mirrorPlane = DX::XMVectorSet(0, 0, 1, 0);
+				DX::XMMATRIX R = DX::XMMatrixReflect(mirrorPlane);
+				MAKKTRIS = MAKKTRIS * R;
+			}
+			MAKKTRIS = DX::XMMatrixTranspose(MAKKTRIS);
 		}
-		else if (tempMirror)
-		{
-			DX::XMVECTOR mirrorPlane = DX::XMVectorSet(0, 0, 1, 0);
-			DX::XMMATRIX R = DX::XMMatrixReflect(mirrorPlane);
-			MAKKTRIS = MAKKTRIS * R;
-		}
-		MAKKTRIS = DX::XMMatrixTranspose(MAKKTRIS);
 	}
 
 	Mesh* mesh;

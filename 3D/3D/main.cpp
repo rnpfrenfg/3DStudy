@@ -9,6 +9,23 @@ void CCreateConsole()
 	freopen("CONIN$", "r", stdin);
 }
 
+Dx* dx;
+
+inline void Test()
+{
+	__try
+	{
+		if (dx->Init())
+		{
+			dx->Run();
+		}
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER)
+	{
+		MessageBox(NULL, L"Error", L"Error", MB_OK);
+	}
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int cmdShow)
 {
 	CCreateConsole();
@@ -19,19 +36,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return 0;
 	}
 
-	try
-	{
-		Dx* dx =  new Dx(hInstance);
-		if (!dx->Init())
-		{
-			return 0;
-		}
-		dx->Run();
-	}
-	catch(int i)
-	{
-		MessageBox(NULL, L"Error", L"Error", MB_OK);
-	}
+	dx = new Dx(hInstance);
+	Test();
 
 	return 0;
 }
