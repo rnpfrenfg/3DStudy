@@ -61,7 +61,7 @@ public:
 		return mWidth;
 	}
 
-	void CopyToBuffer(void* ptr)
+	void CopyAllToBuffer(void* ptr)
 	{
 		memcpy(mMappedData, ptr, mWidth);
 	}

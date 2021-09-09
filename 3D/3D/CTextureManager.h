@@ -6,7 +6,9 @@
 
 class CTextureManager
 {
+	CTextureManager* singleton = nullptr;
 public:
+	CTextureManager() { if (singleton != nullptr) DxThrowIfFailed(-1); singleton = this; }
 
 	HRESULT Init(ComPtr<ID3D12Device> device, UINT srvDescriptorSize)
 	{
@@ -38,14 +40,9 @@ public:
 		mDevice->CreateShaderResourceView(t.resource.Get(), &tempDesc, hDescriptor);
 
 		newTexIndex++;
-	}
 
-	void SetTexture(ComPtr<ID3D12GraphicsCommandList> cmdList, CTexture& tex)
-	{
-		D3D12_GPU_DESCRIPTOR_HANDLE hDescriptor = mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
-		hDescriptor.ptr += tex.index * mSrvDescriptorSize;
-
-		cmdList->SetGraphicsRootDescriptorTable(0, hDescriptor);
+		t._handle = mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
+		t._handle.ptr += t.index * mSrvDescriptorSize;
 	}
 
 	ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap;
@@ -54,8 +51,9 @@ public:
 private:
 	ComPtr<ID3D12Device> mDevice;
 	SIZE_T mSrvDescriptorSize;
-
 	SIZE_T newTexIndex = 0;
+
+	CTexture* lastTexture = nullptr;
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC tempDesc = {};
 };

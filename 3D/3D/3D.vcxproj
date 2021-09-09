@@ -141,6 +141,11 @@
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CD3DX12_ROOT_PARAMETER.h" />
+    <ClInclude Include="FMemoryPool.hpp" />
+    <ClInclude Include="GameMap.h" />
+    <ClInclude Include="GameMapData.h" />
+    <ClInclude Include="GPUConstants.h" />
+    <ClInclude Include="GPUResourceManager.hpp" />
     <ClInclude Include="GraphicSetting.h" />
     <ClInclude Include="RenderItem.h" />
     <ClInclude Include="CommandBundle.h" />
@@ -153,24 +158,23 @@
     <ClInclude Include="KeyboardSetting.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="MMFile.h" />
-    <ClInclude Include="RenderManager.h" />
     <ClInclude Include="tempd3dx.h" />
+    <ClInclude Include="TextureLoader.h" />
     <ClInclude Include="UploadBuffer.h" />
     <ClInclude Include="Vertex.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="GameMap.cpp" />
     <ClCompile Include="RenderItem.cpp" />
-    <ClCompile Include="CommandBundle.cpp" />
     <ClCompile Include="CTexture.cpp" />
     <ClCompile Include="CTextureManager.cpp" />
     <ClCompile Include="ReadFromDDSFile.cpp" />
     <ClCompile Include="Dx.cpp" />
-    <ClCompile Include="GameSetting.cpp" />
     <ClCompile Include="GameTimer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MMFile.cpp" />
-    <ClCompile Include="RenderManager.cpp" />
+    <ClCompile Include="TextureLoader.cpp" />
     <ClCompile Include="Vertex.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -11,7 +11,6 @@ public:
 	{
 		DxThrowIfFailed(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_BUNDLE, IID_PPV_ARGS(&mCommandAllocator)));
 		DxThrowIfFailed(device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_BUNDLE, mCommandAllocator.Get(), pso.Get(), IID_PPV_ARGS(&mCommandList)));
-
 	}
 
 	ComPtr<ID3D12CommandAllocator> mCommandAllocator;
