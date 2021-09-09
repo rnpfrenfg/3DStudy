@@ -47,7 +47,7 @@ public:
 	void AddConstRenderObject(RenderItem& item)
 	{
 		_AddItem(item, mPSO, mapData.mConstants);
-		UpdateMatrix(item);
+		UpdateMatrix(mapData.mConstants[mapData.mConstants.size() - 1]);
 	}
 	void AddMirror(RenderItem& item)
 	{
@@ -93,8 +93,6 @@ public:
 		S* shadowOffsetY;
 
 		for (RenderItem& item : mapData.mObjs)
-			UpdateMatrix(item);
-		for (RenderItem& item : mapData.mConstants)
 			UpdateMatrix(item);
 		for (RenderItem& item : mapData.mTranses)
 			UpdateMatrix(item);
