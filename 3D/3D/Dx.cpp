@@ -32,7 +32,7 @@ Dx::Dx(HINSTANCE instance)
 	mApp = this;
 	mhAppInst = instance;
 
-	gameSetting.mouseSensivity = 0.5;//TODO
+	gameSetting.mouseSensivity = 0.5;
 }
 
 Dx::~Dx()
@@ -79,7 +79,7 @@ LRESULT Dx::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_LBUTTONDOWN:
 	case WM_MBUTTONDOWN:
 	case WM_RBUTTONDOWN:
-		//OnMouseDown(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));  TODO
+		//OnMouseDown(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 		return 0;
 	case WM_LBUTTONUP:
 	case WM_MBUTTONUP:
@@ -241,7 +241,6 @@ void Dx::InitDirectX()
 
 	DxThrowIfFailed(mDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&mCommandAllocator)));
 	DxThrowIfFailed(mDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, mCommandAllocator.Get(), nullptr, IID_PPV_ARGS(&mCommandList)));
-	//TODO mPSO = nullptr
 
 	mapRenderer.Init(graphicSetting, mDevice);
 
@@ -514,7 +513,7 @@ int Dx::Run()
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
-		else//TODO
+		else
 		{
 			mTimer.Tick();
 			if (!mAppPaused)
@@ -560,7 +559,7 @@ void Dx::Render(const GameTimer& gt)
 	FlushCommandQueue();
 
 	DxThrowIfFailed(mCommandAllocator->Reset());
-	DxThrowIfFailed(mCommandList->Reset(mCommandAllocator.Get(), nullptr));// TODO mPSO nullptr
+	DxThrowIfFailed(mCommandList->Reset(mCommandAllocator.Get(), nullptr));
 
 	D3D12_RESOURCE_BARRIER barrier;
 
@@ -579,11 +578,11 @@ void Dx::Render(const GameTimer& gt)
 	mCommandList->SetDescriptorHeaps(1, texManager.mSrvDescriptorHeap.GetAddressOf());
 	mCommandList->ClearRenderTargetView(CurrentBackBufferView(), DX::Colors::LightSteelBlue, 0, nullptr);
 	
-	//TODO for(l: Layers) (ex. Game layer, UI layer......)
+	//for(l: Layers) (ex. Game layer, UI layer......)
 	{
 		mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
-		mapRenderer.Draw(mCommandList);//TODO each layer make cmdlist
+		mapRenderer.Draw(mCommandList);
 	}
 
 	Transition(barrier, CurrentBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
@@ -657,7 +656,7 @@ void Dx::OnResize()
 	optClear.Format = graphicSetting.mDepthStencilFormat;
 	optClear.DepthStencil.Depth = 1.0f;
 	optClear.DepthStencil.Stencil = 0;
-	D3D12_HEAP_PROPERTIES properties;//TODO
+	D3D12_HEAP_PROPERTIES properties;
 	properties.Type = D3D12_HEAP_TYPE_DEFAULT;
 	properties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
 	properties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;

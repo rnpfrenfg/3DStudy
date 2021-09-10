@@ -18,37 +18,12 @@ public:
 
 	HRESULT Init(GraphicSetting& setting, ComPtr<ID3D12Device>& device);
 
-	void _AddItem(RenderItem& item, ComPtr<ID3D12PipelineState> pso, std::vector<RenderItem>& list)
-	{
-		item._InitBundle(mDevice, pso);
-		item._index = newObjIndex;
-		list.push_back(item);
-		newObjIndex++;
-	}
+	void AddRenderObject(RenderItem& item);
 
-	void AddRenderObject(RenderItem& item)
-	{
-		_AddItem(item, mPSO, mapData.mObjs);
+	void AddTransparent(RenderItem& item);
 
-		if (mContainsMirror)
-		{
-			_AddItem(item, mPsoDrawReflections, mapData.mReflectedObjs);
-		}
-		if (mShadow)
-		{
-			_AddItem(item, mPsoShadow, mapData.mShwdowObjs);
-		}
-	}
-	void AddTransparent(RenderItem& item)
-	{
-		_AddItem(item, mPsoBlend, mapData.mTranses);
-	}
+	void AddConstRenderObject(RenderItem& item);
 
-	void AddConstRenderObject(RenderItem& item)
-	{
-		_AddItem(item, mPSO, mapData.mConstants);
-		UpdateMatrix(mapData.mConstants[mapData.mConstants.size() - 1]);
-	}
 	void AddMirror(RenderItem& item)
 	{
 		if (!mContainsMirror)
@@ -56,53 +31,12 @@ public:
 
 		}
 
-		_AddItem(item, mPsoMarkStencilMirrors, mapData.mMirrors);
+		_AddItem(item, mPsoMarkStencilMirrors, mapData.mirrors);
 	}
 
-	void ChangeGraphicsSetting(GraphicSetting& setting)
-	{
-		graphicsSet = setting;
+	void ChangeGraphicsSetting(GraphicSetting& setting);
 
-		frameResource.RenderTargetSize = DX::XMFLOAT2(graphicsSet.width, graphicsSet.height);
-		frameResource.InvRenderTargetSize = DX::XMFLOAT2(1.0f / graphicsSet.width, 1.0f / graphicsSet.height);
-
-		if (setting.shadow && !mShadow)
-		{
-
-		}
-		mShadow = setting.shadow;
-
-		//TODO
-		mContainsMirror = true;
-	}
-
-	void Update(const GameTimer& gt)
-	{
-		UpdateFrameResource(gt);
-
-		DX::XMVECTOR shadowPlane = DX::XMVectorSet(0, 1, 0, 0);
-
-		DX::XMFLOAT3 light = frameResource.Lights[0].Direction;
-		light.x = -light.x;
-		light.y = -light.y;
-		light.z = -light.z;
-		DX::XMVECTOR toMainLight = DX::XMLoadFloat3(&light);
-
-		DX::XMMATRIX S = DX::XMMatrixShadow(shadowPlane, toMainLight);
-		DX::XMMATRIX shadowOffsetY = DX::XMMatrixTranslation(0, 0.001f, 0);
-		S* shadowOffsetY;
-
-		for (RenderItem& item : mapData.mObjs)
-			UpdateMatrix(item);
-		for (RenderItem& item : mapData.mTranses)
-			UpdateMatrix(item);
-		for (RenderItem& item : mapData.mMirrors)
-			UpdateMatrix(item);
-		for (RenderItem& item : mapData.mShwdowObjs)
-			UpdateShadowMatrix(item);
-		for (RenderItem& item : mapData.mReflectedObjs)
-			UpdateReflectedMatrix(item);
-	}
+	void Update(const GameTimer& gt);
 
 	void Draw(ComPtr<ID3D12GraphicsCommandList>& mCommandList)
 	{
@@ -113,18 +47,18 @@ public:
 
 		mCommandList->SetPipelineState(mPSO.Get());
 
-		DrawRenderItems(mCommandList, mapData.mObjs);
-		DrawRenderItems(mCommandList, mapData.mConstants);
+		DrawRenderItems(mCommandList, mapData.objs);
+		DrawRenderItems(mCommandList, mapData.constObjs);
 
 		if(mContainsMirror)
 		{
 			mCommandList->OMSetStencilRef(1);
 			mCommandList->SetPipelineState(mPsoMarkStencilMirrors.Get());
-			DrawRenderItems(mCommandList, mapData.mMirrors);
+			DrawRenderItems(mCommandList, mapData.mirrors);
 
 			mCommandList->SetGraphicsRootConstantBufferView(2, mFrameCB.mBuffer->GetGPUVirtualAddress() + mFrameCB.ElementSize());
 			mCommandList->SetPipelineState(mPsoDrawReflections.Get());
-			DrawRenderItems(mCommandList, mapData.mReflectedObjs);
+			DrawRenderItems(mCommandList, mapData._reflected);
 
 			mCommandList->SetGraphicsRootConstantBufferView(2, mFrameCB.mBuffer->GetGPUVirtualAddress());
 			mCommandList->OMSetStencilRef(0);
@@ -134,7 +68,7 @@ public:
 		{
 			mCommandList->SetGraphicsRootConstantBufferView(3, mMaterialTestCB.mBuffer->GetGPUVirtualAddress() + mMaterialTestCB.ElementSize());
 			mCommandList->SetPipelineState(mPsoBlend.Get());
-			DrawRenderItems(mCommandList, mapData.mShwdowObjs);
+			DrawRenderItems(mCommandList, mapData._shadows);
 		}
 	}
 
@@ -150,6 +84,8 @@ private:
 
 	void BuildRootSignature();
 	void BuildPSO();
+
+	void _AddItem(RenderItem& item, ComPtr<ID3D12PipelineState> pso, std::vector<RenderItem>& list);
 
 	UploadBuffer<ObjectConstants> mObjectCB;
 	UploadBuffer<MaterialConstants> mMaterialTestCB;

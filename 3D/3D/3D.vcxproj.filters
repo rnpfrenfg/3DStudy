@@ -57,25 +57,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MMFile.h">
-      <Filter>Header File</Filter>
-    </ClInclude>
     <ClInclude Include="include.h">
       <Filter>Header File</Filter>
     </ClInclude>
     <ClInclude Include="Dx.h">
-      <Filter>Header File</Filter>
-    </ClInclude>
-    <ClInclude Include="UploadBuffer.h">
-      <Filter>Header File</Filter>
-    </ClInclude>
-    <ClInclude Include="Light.h">
-      <Filter>Header File</Filter>
-    </ClInclude>
-    <ClInclude Include="tempd3dx.h">
-      <Filter>Header File</Filter>
-    </ClInclude>
-    <ClInclude Include="CTextureManager.h">
       <Filter>Header File</Filter>
     </ClInclude>
     <ClInclude Include="GameSetting.h">
@@ -108,23 +93,38 @@
     <ClInclude Include="Vertex.h">
       <Filter>Header File\GameSystem</Filter>
     </ClInclude>
-    <ClInclude Include="GameMap.h">
-      <Filter>Header File</Filter>
-    </ClInclude>
     <ClInclude Include="FMemoryPool.hpp">
       <Filter>Header File\Util</Filter>
-    </ClInclude>
-    <ClInclude Include="GPUResourceManager.hpp">
-      <Filter>Header File\GameSystem</Filter>
-    </ClInclude>
-    <ClInclude Include="GameMapData.h">
-      <Filter>Header File</Filter>
     </ClInclude>
     <ClInclude Include="GameTimer.h">
       <Filter>Header File\Util</Filter>
     </ClInclude>
+    <ClInclude Include="UploadBuffer.h">
+      <Filter>Header File\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="GPUResourceManager.hpp">
+      <Filter>Header File\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="CTextureManager.h">
+      <Filter>Header File\GameSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="tempd3dx.h">
+      <Filter>Header File\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="GameMap.h">
+      <Filter>Header File\GameSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="Light.h">
+      <Filter>Header File\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="GameMapData.h">
+      <Filter>Header File\GameSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="MMFile.h">
+      <Filter>Header File\Util</Filter>
+    </ClInclude>
     <ClInclude Include="GPUConstants.h">
-      <Filter>Source File</Filter>
+      <Filter>Header File\Resource</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -132,9 +132,6 @@
       <Filter>Source File</Filter>
     </ClCompile>
     <ClCompile Include="Dx.cpp">
-      <Filter>Source File</Filter>
-    </ClCompile>
-    <ClCompile Include="CTextureManager.cpp">
       <Filter>Source File</Filter>
     </ClCompile>
     <ClCompile Include="ReadFromDDSFile.cpp">
@@ -158,11 +155,14 @@
     <ClCompile Include="Vertex.cpp">
       <Filter>Source File\System</Filter>
     </ClCompile>
-    <ClCompile Include="GameMap.cpp">
-      <Filter>Source File</Filter>
-    </ClCompile>
     <ClCompile Include="GameTimer.cpp">
       <Filter>Source File\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="CTextureManager.cpp">
+      <Filter>Source File\GameSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="GameMap.cpp">
+      <Filter>Source File\GameSystem</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

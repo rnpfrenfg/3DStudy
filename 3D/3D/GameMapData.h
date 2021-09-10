@@ -6,10 +6,11 @@
 
 struct GameMapData
 {
-	std::vector<RenderItem> mObjs;
-	std::vector<RenderItem> mConstants;
-	std::vector<RenderItem> mTranses;
-	std::vector<RenderItem> mMirrors;
-	std::vector<RenderItem> mReflectedObjs;
-	std::vector<RenderItem> mShwdowObjs;
+	std::vector<RenderItem> objs;
+	std::vector<RenderItem> constObjs;
+	std::vector<RenderItem> transparents;
+	std::vector<RenderItem> mirrors;
+
+	std::vector<RenderItem> _reflected;
+	std::vector<RenderItem> _shadows;
 };

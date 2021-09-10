@@ -20,7 +20,7 @@ HRESULT GameMap::Init(GraphicSetting& setting, ComPtr<ID3D12Device>& device)
 
 	mFrameCB.Init(mDevice.Get(), 2, true);
 
-	mObjectCB.Init(mDevice.Get(), 60000, true);//TODO
+	mObjectCB.Init(mDevice.Get(), 100000, true);
 
 	mMaterialTestCB.Init(mDevice.Get(), 2, true);
 
@@ -70,6 +70,40 @@ HRESULT GameMap::Init(GraphicSetting& setting, ComPtr<ID3D12Device>& device)
 	return S_OK;
 }
 
+void GameMap::AddConstRenderObject(RenderItem& item)
+{
+	_AddItem(item, mPSO, mapData.constObjs);
+	UpdateMatrix(mapData.constObjs[mapData.constObjs.size() - 1]);
+}
+
+void GameMap::Update(const GameTimer& gt)
+{
+	UpdateFrameResource(gt);
+
+	DX::XMVECTOR shadowPlane = DX::XMVectorSet(0, 1, 0, 0);
+
+	DX::XMFLOAT3 light = frameResource.Lights[0].Direction;
+	light.x = -light.x;
+	light.y = -light.y;
+	light.z = -light.z;
+	DX::XMVECTOR toMainLight = DX::XMLoadFloat3(&light);
+
+	DX::XMMATRIX S = DX::XMMatrixShadow(shadowPlane, toMainLight);
+	DX::XMMATRIX shadowOffsetY = DX::XMMatrixTranslation(0, 0.001f, 0);
+	S* shadowOffsetY;
+
+	for (RenderItem& item : mapData.objs)
+		UpdateMatrix(item);
+	for (RenderItem& item : mapData.transparents)
+		UpdateMatrix(item);
+	for (RenderItem& item : mapData.mirrors)
+		UpdateMatrix(item);
+	for (RenderItem& item : mapData._shadows)
+		UpdateShadowMatrix(item);
+	for (RenderItem& item : mapData._reflected)
+		UpdateReflectedMatrix(item);
+}
+
 void GameMap::DrawRenderItems(ComPtr<ID3D12GraphicsCommandList>& cmdList, std::vector<RenderItem>& meshObjects)
 {
 	for (UINT i = 0; i < meshObjects.size(); i++)
@@ -87,6 +121,49 @@ void GameMap::DrawRenderItems(ComPtr<ID3D12GraphicsCommandList>& cmdList, std::v
 
 		cmdList->ExecuteBundle(mesh._bundle.mCommandList.Get());
 	}
+}
+
+void GameMap::_AddItem(RenderItem& item, ComPtr<ID3D12PipelineState> pso, std::vector<RenderItem>& list)
+{
+	item._InitBundle(mDevice, pso);
+	item._index = newObjIndex;
+	list.push_back(item);
+	newObjIndex++;
+}
+
+void GameMap::AddRenderObject(RenderItem& item)
+{
+	_AddItem(item, mPSO, mapData.objs);
+
+	if (mContainsMirror)
+	{
+		_AddItem(item, mPsoDrawReflections, mapData._reflected);
+	}
+	if (mShadow)
+	{
+		_AddItem(item, mPsoShadow, mapData._shadows);
+	}
+}
+
+void GameMap::AddTransparent(RenderItem& item)
+{
+	_AddItem(item, mPsoBlend, mapData.transparents);
+}
+
+void GameMap::ChangeGraphicsSetting(GraphicSetting& setting)
+{
+	graphicsSet = setting;
+
+	frameResource.RenderTargetSize = DX::XMFLOAT2(graphicsSet.width, graphicsSet.height);
+	frameResource.InvRenderTargetSize = DX::XMFLOAT2(1.0f / graphicsSet.width, 1.0f / graphicsSet.height);
+
+	if (setting.shadow && !mShadow)
+	{
+
+	}
+	mShadow = setting.shadow;
+
+	mContainsMirror = true;
 }
 
 void GameMap::UpdateMatrix(RenderItem& item)

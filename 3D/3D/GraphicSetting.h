@@ -18,7 +18,7 @@ struct GraphicSetting
 	DXGI_FORMAT mDepthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 };
 
-/*  todo
+/* 
 Display mode
 Aspect ratio
 Resolution

@@ -2,7 +2,7 @@
 
 #define MaxLights 16
 
-#define NUM_DIR_LIGHTS 3//TODO
+#define NUM_DIR_LIGHTS 3
 
 struct Light
 {
