@@ -19,7 +19,7 @@ private:
 
 class KeyboardSetting
 {
-public://TODO
+public:
 	KeyCommand VKKeySetting[0xFE + 50];
 
 	static void DefaultKeyboardSetting()

@@ -1,7 +1,7 @@
 #include <d3d11_1.h>
 
 #include "include.h"
-#include "CTexture.h"
+#include "TextureLoader.h"
 
 enum DDS_ALPHA_MODE
 {
@@ -1321,7 +1321,7 @@ static DDS_ALPHA_MODE GetAlphaMode(_In_ const DDS_HEADER* header)
     return DDS_ALPHA_MODE_UNKNOWN;
 }
 
-HRESULT CTexture::_ReadFromDDSFile(const wchar_t* path, ComPtr<ID3D12GraphicsCommandList> cmdList, ComPtr<ID3D12Device> device, _Out_ CTexture& texture)
+HRESULT TextureLoader::_ReadFromDDSFile(const wchar_t* path, ComPtr<ID3D12GraphicsCommandList> cmdList, ComPtr<ID3D12Device> device, _Out_ CTexture& texture)
 {
     DDS_HEADER* header = nullptr;
     uint8_t* bitData = nullptr;

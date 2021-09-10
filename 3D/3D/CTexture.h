@@ -11,13 +11,5 @@ public:
 	ComPtr<ID3D12Resource> resource;
 	UploadBufferBySize uploadBuffer;
 
-
-	static HRESULT ReadFromDDSFile(const wchar_t* path, ComPtr<ID3D12GraphicsCommandList> cmdList, ComPtr<ID3D12Device> device, _Out_ CTexture& texture)
-	{
-		return _ReadFromDDSFile(path, cmdList, device, texture);
-	}
-
-public:
-	static HRESULT _ReadFromDDSFile(const wchar_t* path, ComPtr<ID3D12GraphicsCommandList> cmdList, ComPtr<ID3D12Device> device, _Out_ CTexture& texture);
+	D3D12_GPU_DESCRIPTOR_HANDLE _handle;
 };
-

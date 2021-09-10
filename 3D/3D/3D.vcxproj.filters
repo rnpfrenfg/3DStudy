@@ -1,116 +1,176 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="소스 파일">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="헤더 파일">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
     <Filter Include="리소스 파일">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source File">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header File">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Header File\Setting">
+      <UniqueIdentifier>{bef1d39a-6b3b-4f0b-b5a1-dfee10e7a45d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source File\Resource">
+      <UniqueIdentifier>{3fec3919-a82c-4008-ab17-64e26c8b5d64}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source File\Resource\Loader">
+      <UniqueIdentifier>{e56c78d2-0d31-412b-bf4c-a0fe644df036}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source File\Resource\Loader\te">
+      <UniqueIdentifier>{61ae639e-5888-4517-a8ae-6fc8eb0a5474}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header File\Resource">
+      <UniqueIdentifier>{54f21a0b-a2e9-4958-81f2-44dc1d61477e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header File\Resource\Loader">
+      <UniqueIdentifier>{5ebf2ffd-7679-49be-bd4e-a29356663c6d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source File\Util">
+      <UniqueIdentifier>{c235a53e-9ca4-45de-9f56-153c2ca466f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header File\Util">
+      <UniqueIdentifier>{c9934f7f-3f3a-412a-bba6-f0fe4af71a2b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header File\__TODO">
+      <UniqueIdentifier>{d8a6cc1d-2ff7-4456-859e-0042fb7fec68}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header File\Object">
+      <UniqueIdentifier>{68db0183-02e4-4459-8418-2b507e880cb1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source File\Object">
+      <UniqueIdentifier>{56061873-dfff-40f3-8268-f9ae194a0ae0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source File\GameSystem">
+      <UniqueIdentifier>{c6853432-7fde-4cb3-bcfd-42fccf13d16f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header File\GameSystem">
+      <UniqueIdentifier>{c5b8fbdb-2eb4-46fb-baed-3eae9dbf84c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source File\System">
+      <UniqueIdentifier>{7f682d83-6131-4649-9f5d-af2615ae1a0c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MMFile.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="include.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="GameTimer.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>Header File</Filter>
     </ClInclude>
     <ClInclude Include="Dx.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="CommandBundle.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="CMeshObject.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Vertex.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="UploadBuffer.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="KeyboardSetting.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>Header File</Filter>
     </ClInclude>
     <ClInclude Include="GameSetting.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>Header File\Setting</Filter>
     </ClInclude>
-    <ClInclude Include="Camera.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Light.h">
-      <Filter>헤더 파일</Filter>
+    <ClInclude Include="GraphicSetting.h">
+      <Filter>Header File\Setting</Filter>
     </ClInclude>
     <ClInclude Include="CTexture.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>Header File\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureLoader.h">
+      <Filter>Header File\Resource\Loader</Filter>
     </ClInclude>
     <ClInclude Include="CD3DX12_ROOT_PARAMETER.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>Header File\Util</Filter>
     </ClInclude>
-    <ClInclude Include="tempd3dx.h">
-      <Filter>헤더 파일</Filter>
+    <ClInclude Include="RenderItem.h">
+      <Filter>Header File\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Header File\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="CommandBundle.h">
+      <Filter>Header File\GameSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="KeyboardSetting.h">
+      <Filter>Header File\Setting</Filter>
+    </ClInclude>
+    <ClInclude Include="Vertex.h">
+      <Filter>Header File\GameSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="FMemoryPool.hpp">
+      <Filter>Header File\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="GameTimer.h">
+      <Filter>Header File\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="UploadBuffer.h">
+      <Filter>Header File\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="GPUResourceManager.hpp">
+      <Filter>Header File\Resource</Filter>
     </ClInclude>
     <ClInclude Include="CTextureManager.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>Header File\GameSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="tempd3dx.h">
+      <Filter>Header File\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="GameMap.h">
+      <Filter>Header File\GameSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="Light.h">
+      <Filter>Header File\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="GameMapData.h">
+      <Filter>Header File\GameSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="MMFile.h">
+      <Filter>Header File\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="GPUConstants.h">
+      <Filter>Header File\Resource</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="MMFile.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="GameTimer.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>Source File</Filter>
     </ClCompile>
     <ClCompile Include="Dx.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="CommandBundle.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="CMeshObject.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Vertex.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="KeyboardSetting.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="GameSetting.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Camera.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="CTexture.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>Source File</Filter>
     </ClCompile>
     <ClCompile Include="ReadFromDDSFile.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>Source File\Resource\Loader\te</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureLoader.cpp">
+      <Filter>Source File\Resource\Loader</Filter>
+    </ClCompile>
+    <ClCompile Include="CTexture.cpp">
+      <Filter>Source File\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="MMFile.cpp">
+      <Filter>Source File\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Source File\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderItem.cpp">
+      <Filter>Source File\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="Vertex.cpp">
+      <Filter>Source File\System</Filter>
+    </ClCompile>
+    <ClCompile Include="GameTimer.cpp">
+      <Filter>Source File\Util</Filter>
     </ClCompile>
     <ClCompile Include="CTextureManager.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>Source File\GameSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="GameMap.cpp">
+      <Filter>Source File\GameSystem</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="shaders.txt">
-      <Filter>헤더 파일</Filter>
+      <Filter>Header File</Filter>
     </Text>
     <Text Include="todo.txt">
-      <Filter>헤더 파일</Filter>
+      <Filter>Header File\__TODO</Filter>
     </Text>
   </ItemGroup>
 </Project>

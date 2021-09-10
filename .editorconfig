@@ -1,7 +1,0 @@
-root = true
-
-[*.cpp]
-charset = utf-8
-
-[*.h]
-charset = utf-8
