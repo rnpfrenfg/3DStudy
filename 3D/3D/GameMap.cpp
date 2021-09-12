@@ -15,57 +15,38 @@ HRESULT GameMap::Init(GraphicSetting& setting, ComPtr<ID3D12Device>& device)
 	BuildRootSignature();
 	BuildPSO();
 
-	DxThrowIfFailed(mDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&mCommandAllocator)));
-	DxThrowIfFailed(mDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, mCommandAllocator.Get(), mPSO.Get(), IID_PPV_ARGS(&mCommandList)));
+	MaterialConstants tetst;
+	tetst.DiffuseAlbedo = DX::XMFLOAT4(1, 1, 1, 1);
+	tetst.FresnelR0 = DX::XMFLOAT3(0.05f, 0.05f, 0.05f);
+	tetst.Roughness = 0.3f;
+	tetst.MatTransform = DX::XMMatrixIdentity();
+	tetst.MatTransform = DX::XMMatrixTranspose(tetst.MatTransform);
 
-	mFrameCB.Init(mDevice.Get(), 2, true);
+	MaterialConstants shadow;
+	shadow.DiffuseAlbedo = DX::XMFLOAT4(0.0f, 0.0f, 0.0f, 0.5f);
+	shadow.FresnelR0 = DX::XMFLOAT3(0.001f, 0.001f, 0.001f);
+	shadow.Roughness = 0;
+	shadow.MatTransform = DX::XMMatrixIdentity();
+	shadow.MatTransform = DX::XMMatrixTranspose(tetst.MatTransform);
 
-	mObjectCB.Init(mDevice.Get(), 100000, true);
-
-	mMaterialTestCB.Init(mDevice.Get(), 2, true);
-
+	for (int i = 0; i < FrameResource::FrameResources; i++)
 	{
-		MaterialConstants tetst;
-		tetst.DiffuseAlbedo = DX::XMFLOAT4(1, 1, 1, 1);
-		tetst.FresnelR0 = DX::XMFLOAT3(0.05f, 0.05f, 0.05f);
-		tetst.Roughness = 0.3f;
-		tetst.MatTransform = DX::XMMatrixIdentity();
-		tetst.MatTransform = DX::XMMatrixTranspose(tetst.MatTransform);
+		mFrameResources[i].mFrameCB.Init(device.Get(), 2, true);
+		mFrameResources[i].mObjectCB.Init(device.Get(), 100000, true);
+		mFrameResources[i].mMaterialTestCB.Init(device.Get(), 2, true);
 
-		MaterialConstants shadow;
-		shadow.DiffuseAlbedo = DX::XMFLOAT4(0.0f, 0.0f, 0.0f, 0.5f);
-		shadow.FresnelR0 = DX::XMFLOAT3(0.001f, 0.001f, 0.001f);
-		shadow.Roughness = 0;
-		shadow.MatTransform = DX::XMMatrixIdentity();
-		shadow.MatTransform = DX::XMMatrixTranspose(tetst.MatTransform);
+		mFrameResources[i].mMaterialTestCB.CopyToBuffer(0, &tetst);
+		mFrameResources[i].mMaterialTestCB.CopyToBuffer(1, &shadow);
 
-		mMaterialTestCB.CopyToBuffer(0, &tetst);
-		mMaterialTestCB.CopyToBuffer(1, &shadow);
+		mFrameResources[i].frameResource.AmbientLight = { 0.25f,0.25f,0.35f,1.0f };
+		mFrameResources[i].frameResource.Lights[0].Direction = { 0.57735f, -0.57735f, 0.57735f };
+		mFrameResources[i].frameResource.Lights[0].Strength = { 0.6f,0.6f,0.6f };
+		mFrameResources[i].frameResource.Lights[1].Direction = { -0.57735f, -0.57735f, 0.57735f };
+		mFrameResources[i].frameResource.Lights[1].Strength = { 0.3f,0.3f,0.3f };
+		mFrameResources[i].frameResource.Lights[2].Direction = { 0.0f,-0.707f,-0.707f };
+		mFrameResources[i].frameResource.Lights[2].Strength = { 0.15f,0.15f,0.15f };
+
 	}
-
-	frameResource.AmbientLight = { 0.25f,0.25f,0.35f,1.0f };
-	frameResource.Lights[0].Direction = { 0.57735f, -0.57735f, 0.57735f };
-	frameResource.Lights[0].Strength = { 0.6f,0.6f,0.6f };
-	frameResource.Lights[1].Direction = { -0.57735f, -0.57735f, 0.57735f };
-	frameResource.Lights[1].Strength = { 0.3f,0.3f,0.3f };
-	frameResource.Lights[2].Direction = { 0.0f,-0.707f,-0.707f };
-	frameResource.Lights[2].Strength = { 0.15f,0.15f,0.15f };
-
-	mFrameCB.CopyToBuffer(0, &frameResource);
-
-	reflectedFrameResoruce = frameResource;
-	DX::XMVECTOR mirrorPlane = DX::XMVectorSet(0, 0, 1, 0);
-	DX::XMMATRIX R = DX::XMMatrixReflect(mirrorPlane);
-
-
-	for (int i = 0; i < 3; i++)
-	{
-		DX::XMVECTOR lightDir = XMLoadFloat3(&frameResource.Lights[i].Direction);
-		DX::XMVECTOR reflectedLightDir = DX::XMVector3TransformNormal(lightDir, R);
-		DX::XMStoreFloat3(&reflectedFrameResoruce.Lights[i].Direction, reflectedLightDir);
-	}
-
-	mFrameCB.CopyToBuffer(1, &reflectedFrameResoruce);
 
 	return S_OK;
 }
@@ -73,39 +54,77 @@ HRESULT GameMap::Init(GraphicSetting& setting, ComPtr<ID3D12Device>& device)
 void GameMap::AddConstRenderObject(RenderItem& item)
 {
 	_AddItem(item, mPSO, mapData.constObjs);
-	UpdateMatrix(mapData.constObjs[mapData.constObjs.size() - 1]);
+	for (int i = 0; i < FrameResource::FrameResources; i++)
+	{
+		UpdateMatrix(mapData.constObjs[mapData.constObjs.size() - 1], mFrameResources[i].mObjectCB);
+	}
 }
 
-void GameMap::Update(const GameTimer& gt)
+void GameMap::Update(const GameTimer& gt, GPUQueue& queue)
 {
+	currFrameResourceIndex = (currFrameResourceIndex + 1) % FrameResource::FrameResources;
+	mCurrFrameResource = &mFrameResources[currFrameResourceIndex];
+
+	queue.WaitUntil(mCurrFrameResource->fence);
+
 	UpdateFrameResource(gt);
 
-	DX::XMVECTOR shadowPlane = DX::XMVectorSet(0, 1, 0, 0);
-
-	DX::XMFLOAT3 light = frameResource.Lights[0].Direction;
-	light.x = -light.x;
-	light.y = -light.y;
-	light.z = -light.z;
-	DX::XMVECTOR toMainLight = DX::XMLoadFloat3(&light);
-
-	DX::XMMATRIX S = DX::XMMatrixShadow(shadowPlane, toMainLight);
-	DX::XMMATRIX shadowOffsetY = DX::XMMatrixTranslation(0, 0.001f, 0);
-	S* shadowOffsetY;
+	auto& objCB = mCurrFrameResource->mObjectCB;
 
 	for (RenderItem& item : mapData.objs)
-		UpdateMatrix(item);
+		UpdateMatrix(item, objCB);
 	for (RenderItem& item : mapData.transparents)
-		UpdateMatrix(item);
+		UpdateMatrix(item, objCB);
 	for (RenderItem& item : mapData.mirrors)
-		UpdateMatrix(item);
+		UpdateMatrix(item, objCB);
 	for (RenderItem& item : mapData._shadows)
-		UpdateShadowMatrix(item);
+		UpdateShadowMatrix(item, objCB);
 	for (RenderItem& item : mapData._reflected)
-		UpdateReflectedMatrix(item);
+		UpdateReflectedMatrix(item, objCB);
+}
+
+void GameMap::Draw(ComPtr<ID3D12GraphicsCommandList> cmdList, GPUQueue& queue)
+{
+	auto& frameCB = mCurrFrameResource->mFrameCB;
+	auto& materialCB = mCurrFrameResource->mMaterialTestCB;
+
+	cmdList->SetGraphicsRootSignature(mRootSignature.Get());
+
+	cmdList->SetGraphicsRootConstantBufferView(2, frameCB.mBuffer->GetGPUVirtualAddress());
+	cmdList->SetGraphicsRootConstantBufferView(3, materialCB.mBuffer->GetGPUVirtualAddress());
+
+	cmdList->SetPipelineState(mPSO.Get());
+
+	DrawRenderItems(cmdList, mapData.objs);
+	DrawRenderItems(cmdList, mapData.constObjs);
+
+	if (mContainsMirror)
+	{
+		cmdList->OMSetStencilRef(1);
+		cmdList->SetPipelineState(mPsoMarkStencilMirrors.Get());
+		DrawRenderItems(cmdList, mapData.mirrors);
+
+		cmdList->SetGraphicsRootConstantBufferView(2, frameCB.mBuffer->GetGPUVirtualAddress() + frameCB.ElementSize());
+		cmdList->SetPipelineState(mPsoDrawReflections.Get());
+		DrawRenderItems(cmdList, mapData._reflected);
+
+		cmdList->SetGraphicsRootConstantBufferView(2, frameCB.mBuffer->GetGPUVirtualAddress());
+		cmdList->OMSetStencilRef(0);
+	}
+
+	if (mShadow)
+	{
+		cmdList->SetGraphicsRootConstantBufferView(3, materialCB.mBuffer->GetGPUVirtualAddress() + materialCB.ElementSize());
+		cmdList->SetPipelineState(mPsoBlend.Get());
+		DrawRenderItems(cmdList, mapData._shadows);
+	}
+
+	mCurrFrameResource->fence = queue.Signal();
 }
 
 void GameMap::DrawRenderItems(ComPtr<ID3D12GraphicsCommandList>& cmdList, std::vector<RenderItem>& meshObjects)
 {
+	auto& objCB = mCurrFrameResource->mObjectCB;
 	for (UINT i = 0; i < meshObjects.size(); i++)
 	{
 		auto& mesh = meshObjects[i];
@@ -117,7 +136,7 @@ void GameMap::DrawRenderItems(ComPtr<ID3D12GraphicsCommandList>& cmdList, std::v
 			cmdList->SetGraphicsRootDescriptorTable(0,texHandle);
 			lasthandle = texHandle;
 		}
-		cmdList->SetGraphicsRootConstantBufferView(1, mObjectCB.mBuffer->GetGPUVirtualAddress() + mObjectCB.ElementSize() * (mesh._index));
+		cmdList->SetGraphicsRootConstantBufferView(1, objCB.mBuffer->GetGPUVirtualAddress() + objCB.ElementSize() * (mesh._index));
 
 		cmdList->ExecuteBundle(mesh._bundle.mCommandList.Get());
 	}
@@ -127,6 +146,7 @@ void GameMap::_AddItem(RenderItem& item, ComPtr<ID3D12PipelineState> pso, std::v
 {
 	item._InitBundle(mDevice, pso);
 	item._index = newObjIndex;
+	item.dirty = FrameResource::FrameResources;
 	list.push_back(item);
 	newObjIndex++;
 }
@@ -154,41 +174,46 @@ void GameMap::ChangeGraphicsSetting(GraphicSetting& setting)
 {
 	graphicsSet = setting;
 
-	frameResource.RenderTargetSize = DX::XMFLOAT2(graphicsSet.width, graphicsSet.height);
-	frameResource.InvRenderTargetSize = DX::XMFLOAT2(1.0f / graphicsSet.width, 1.0f / graphicsSet.height);
+	for (int i = 0; i < FrameResource::FrameResources; i++)
+	{
+		auto& frameResource = mFrameResources[i].frameResource;
+		frameResource.RenderTargetSize = DX::XMFLOAT2(graphicsSet.width, graphicsSet.height);
+		frameResource.InvRenderTargetSize = DX::XMFLOAT2(1.0f / graphicsSet.width, 1.0f / graphicsSet.height);
+	}
 
 	if (setting.shadow && !mShadow)
 	{
-
+		//TODO
 	}
 	mShadow = setting.shadow;
 
 	mContainsMirror = true;
 }
 
-void GameMap::UpdateMatrix(RenderItem& item)
+void GameMap::UpdateMatrix(RenderItem& item, UploadBuffer<ObjectConstants>& objectCB)
 {
 	if (item.dirty)
 	{
-		ObjectConstants objectCB;
+		ObjectConstants objConst;
 		DX::XMMATRIX m;
 
 		m = DX::XMMatrixScaling(item.scale, item.scale, item.scale) * DX::XMMatrixTranslation(item.x, item.y, item.z);
 		m = DX::XMMatrixTranspose(m);
 
-		objectCB.world = m;
-		objectCB.TexTransform = DX::XMMatrixTranspose(objectCB.TexTransform);
-		mObjectCB.CopyToBuffer(item._index, &objectCB);
-		item.dirty = false;
+		objConst.world = m;
+		objConst.TexTransform = DX::XMMatrixTranspose(objConst.TexTransform);
+		objectCB.CopyToBuffer(item._index, &objConst);
+		item.dirty--;
 	}
 }
-void GameMap::UpdateShadowMatrix(RenderItem& item)
+
+void GameMap::UpdateShadowMatrix(RenderItem& item, UploadBuffer<ObjectConstants>& objectCB)
 {
 	if (item.dirty)
 	{
 		DX::XMVECTOR shadowPlane = DX::XMVectorSet(0, 1, 0, 0);
 
-		DX::XMFLOAT3 light = frameResource.Lights[0].Direction;
+		DX::XMFLOAT3 light = mCurrFrameResource->frameResource.Lights[0].Direction;
 		light.x = -light.x;
 		light.y = -light.y;
 		light.z = -light.z;
@@ -197,38 +222,37 @@ void GameMap::UpdateShadowMatrix(RenderItem& item)
 		DX::XMMATRIX S = DX::XMMatrixShadow(shadowPlane, toMainLight);
 		DX::XMMATRIX shadowOffsetY = DX::XMMatrixTranslation(0, 0.001f, 0);
 
-		ObjectConstants objectCB;
+		ObjectConstants objConst;
 		DX::XMMATRIX m;
 
 		m = DX::XMMatrixScaling(item.scale, item.scale, item.scale) * DX::XMMatrixTranslation(item.x, item.y, item.z);
 		m *= S * shadowOffsetY;
 		m = DX::XMMatrixTranspose(m);
 
-		objectCB.world = m;
-		objectCB.TexTransform = DX::XMMatrixTranspose(objectCB.TexTransform);
-		mObjectCB.CopyToBuffer(item._index, &objectCB);
-		item.dirty = false;
+		objConst.world = m;
+		objConst.TexTransform = DX::XMMatrixTranspose(objConst.TexTransform);
+		objectCB.CopyToBuffer(item._index, &objConst);
+		item.dirty--;
 	}
 }
-void GameMap::UpdateReflectedMatrix(RenderItem& item)
+void GameMap::UpdateReflectedMatrix(RenderItem& item, UploadBuffer<ObjectConstants>& objectCB)
 {
 	if (item.dirty)
 	{
 		DX::XMVECTOR mirrorPlane = DX::XMVectorSet(0, 0, 1, 0);
 		DX::XMMATRIX R = DX::XMMatrixReflect(mirrorPlane);
 
-		ObjectConstants objectCB;
+		ObjectConstants objConst;
 		DX::XMMATRIX m;
-
 
 		m = DX::XMMatrixScaling(item.scale, item.scale, item.scale) * DX::XMMatrixTranslation(item.x, item.y, item.z);
 		m *= R;
 		m = DX::XMMatrixTranspose(m);
 
-		objectCB.world = m;
-		objectCB.TexTransform = DX::XMMatrixTranspose(objectCB.TexTransform);
-		mObjectCB.CopyToBuffer(item._index, &objectCB);
-		item.dirty = false;
+		objConst.world = m;
+		objConst.TexTransform = DX::XMMatrixTranspose(objConst.TexTransform);
+		objectCB.CopyToBuffer(item._index, &objConst);
+		item.dirty--;
 	}
 }
 
@@ -247,6 +271,8 @@ void GameMap::UpdateFrameResource(const GameTimer& gt)
 	XMMATRIX invProj = DX::XMMatrixInverse(nullptr, proj);
 	XMMATRIX invViewProj = DX::XMMatrixInverse(nullptr, viewProj);
 
+	auto& frameResource = mCurrFrameResource->frameResource;
+
 	frameResource.view = DX::XMMatrixTranspose(view);
 	frameResource.InvView = DX::XMMatrixTranspose(invView);
 	frameResource.Proj = DX::XMMatrixTranspose(proj);
@@ -260,8 +286,9 @@ void GameMap::UpdateFrameResource(const GameTimer& gt)
 	frameResource.TotalTime = gt.TotalTime();
 	frameResource.DeltaTime = gt.DeltaTime();
 
-	mFrameCB.CopyToBuffer(0, &frameResource);
+	mCurrFrameResource->mFrameCB.CopyToBuffer(0, &frameResource);
 
+	auto& reflectedFrameResoruce = mCurrFrameResource->reflectedFrameResoruce;
 	reflectedFrameResoruce = frameResource;
 	DX::XMVECTOR mirrorPlane = DX::XMVectorSet(0, 0, 1, 0);
 	DX::XMMATRIX R = DX::XMMatrixReflect(mirrorPlane);
@@ -273,7 +300,7 @@ void GameMap::UpdateFrameResource(const GameTimer& gt)
 		DX::XMStoreFloat3(&reflectedFrameResoruce.Lights[i].Direction, reflectedLightDir);
 	}
 
-	mFrameCB.CopyToBuffer(1, &reflectedFrameResoruce);
+	mCurrFrameResource->mFrameCB.CopyToBuffer(1, &reflectedFrameResoruce);
 }
 
 std::array<const D3D12_STATIC_SAMPLER_DESC, 6> GetStaticSamplers()

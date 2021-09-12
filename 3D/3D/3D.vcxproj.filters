@@ -123,8 +123,11 @@
     <ClInclude Include="MMFile.h">
       <Filter>Header File\Util</Filter>
     </ClInclude>
-    <ClInclude Include="GPUConstants.h">
-      <Filter>Header File\Resource</Filter>
+    <ClInclude Include="FrameResource.h">
+      <Filter>Header File</Filter>
+    </ClInclude>
+    <ClInclude Include="GPUQueue.h">
+      <Filter>Header File</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -163,6 +166,12 @@
     </ClCompile>
     <ClCompile Include="GameMap.cpp">
       <Filter>Source File\GameSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="FrameResource.cpp">
+      <Filter>Source File</Filter>
+    </ClCompile>
+    <ClCompile Include="GPUQueue.cpp">
+      <Filter>Source File</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -11,8 +11,11 @@
 #include "CTexture.h"
 #include "CTextureManager.h"
 #include "GraphicSetting.h"
-#include "GPUConstants.h"
+#include "GPUQueue.h"
 #include "GameMap.h"
+#include "FrameResource.h"
+
+#include "_work.h"//TODO
 
 #include <fstream>
 
@@ -32,7 +35,6 @@ private:
 	HINSTANCE mhAppInst;
 	HWND mhMainWnd;
 
-	HANDLE mFenceEvent;
 	std::wstring mClassName = L"MainWnd";
 	std::wstring mMainWndCaption = L"d3d App";
 
@@ -65,7 +67,6 @@ private:
 	void CCreateDevice();
 	void LoadModels();
 	void CCreateSwapChain();
-	void CCreateCommandQueue(ComPtr<ID3D12CommandQueue>& que);
 	void CCreateRtvAndDsvDescriptorHeaps();
 
 	D3D12_CPU_DESCRIPTOR_HANDLE CurrentBackBufferView()
@@ -86,7 +87,9 @@ private:
 	void UpdateGraphicSetting(GraphicSetting& setting);
 
 private:
+	_work work;
 
+	GPUQueue mQueue;
 	GameMap mapRenderer;
 	CTextureManager texManager;
 
@@ -106,12 +109,10 @@ private:
 	CTexture texWirefence;
 	CTexture texStone;
 
-	ComPtr<ID3D12CommandQueue> mCommandQueue;
-	ComPtr<ID3D12CommandAllocator> mCommandAllocator;
+	UINT currFrameResourceIndex = 0;
+	UINT mCmdAllocsFence[FrameResource::FrameResources];
+	ComPtr<ID3D12CommandAllocator> mCommandAllocator[FrameResource::FrameResources];
 	ComPtr<ID3D12GraphicsCommandList> mCommandList;
-
-	ComPtr<ID3D12Fence> mFence;
-	UINT64 mCurrentFence = 0;
 
 	ComPtr<ID3D12DescriptorHeap> mRtvHeap;
 	ComPtr<ID3D12DescriptorHeap> mDsvHeap;

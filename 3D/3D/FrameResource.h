@@ -1,6 +1,6 @@
 #pragma once
 
-#include "include.h"
+#include "UploadBuffer.h"
 
 #include "Light.h"
 
@@ -19,7 +19,7 @@ struct MaterialConstants
 	DX::XMMATRIX MatTransform = DX::XMMatrixScaling(1, 1, 1);
 };
 
-struct FrameResource
+struct FrameConstants
 {
 	DX::XMMATRIX view;
 	DX::XMMATRIX InvView;
@@ -45,3 +45,19 @@ struct FrameResource
 
 	Light Lights[MaxLights];
 };
+class FrameResource
+{
+public:
+	enum {FrameResources = 5};
+	
+	ComPtr<ID3D12CommandAllocator> CmdListAlloc;
+
+	UploadBuffer<ObjectConstants> mObjectCB;
+	UploadBuffer<MaterialConstants> mMaterialTestCB;
+	UploadBuffer<FrameConstants> mFrameCB;
+	FrameConstants frameResource;
+	FrameConstants reflectedFrameResoruce;
+
+	UINT64 fence = 0;
+};
+

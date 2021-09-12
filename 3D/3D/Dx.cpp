@@ -37,7 +37,6 @@ Dx::Dx(HINSTANCE instance)
 
 Dx::~Dx()
 {
-	CloseHandle(mFenceEvent);
 	UnregisterClass(mClassName.c_str(), mhAppInst);
 }
 
@@ -155,12 +154,6 @@ bool Dx::Init()
 	if (!InitMainWindow())
 		return false;
 
-	mFenceEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-	if (mFenceEvent == NULL)
-	{
-		DxThrowIfFailed(-1);
-	}
-
 	InitDirectX();
 
 	OnResize();
@@ -231,16 +224,17 @@ void Dx::InitDirectX()
 	mDsvDescriptorSize = mDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 	mCbvSrvUavDescriptorSize = mDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-	CCreateCommandQueue(mCommandQueue);
+	mQueue.Init(mDevice);
 	CCreateSwapChain();
 	CCreateRtvAndDsvDescriptorHeaps();
 
 	DxThrowIfFailed(texManager.Init(mDevice, mCbvSrvUavDescriptorSize));
 
-	DxThrowIfFailed(mDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&mFence)));
-
-	DxThrowIfFailed(mDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&mCommandAllocator)));
-	DxThrowIfFailed(mDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, mCommandAllocator.Get(), nullptr, IID_PPV_ARGS(&mCommandList)));
+	for (int i = 0; i < FrameResource::FrameResources; i++)
+	{
+		DxThrowIfFailed(mDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&mCommandAllocator[i])));
+	}
+	DxThrowIfFailed(mDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, mCommandAllocator[0].Get(), nullptr, IID_PPV_ARGS(&mCommandList)));
 
 	mapRenderer.Init(graphicSetting, mDevice);
 
@@ -254,7 +248,7 @@ void Dx::InitDirectX()
 	}
 
 	DxThrowIfFailed(mCommandList->Close());
-	mCommandQueue->ExecuteCommandLists(1, (ID3D12CommandList* const*)mCommandList.GetAddressOf());
+	mQueue.commandQueue->ExecuteCommandLists(1, (ID3D12CommandList* const*)mCommandList.GetAddressOf());
 	FlushCommandQueue();
 
 	mCommandList->SetGraphicsRootDescriptorTable(0, texManager.mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
@@ -279,15 +273,6 @@ void Dx::CCreateDevice()
 		));
 	}
 }
-void Dx::CCreateCommandQueue(ComPtr<ID3D12CommandQueue>& que)
-{
-	D3D12_COMMAND_QUEUE_DESC queDesc;
-	queDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-	queDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
-	queDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-	queDesc.NodeMask = 0;
-	DxThrowIfFailed(mDevice->CreateCommandQueue(&queDesc, IID_PPV_ARGS(que.GetAddressOf())));
-}
 
 void Dx::CCreateSwapChain()
 {
@@ -309,7 +294,7 @@ void Dx::CCreateSwapChain()
 	sd.Windowed = true;
 	sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-	DxThrowIfFailed(mFactory->CreateSwapChain(mCommandQueue.Get(), &sd, mSwapChain.GetAddressOf()));
+	DxThrowIfFailed(mFactory->CreateSwapChain(mQueue.commandQueue.Get(), &sd, mSwapChain.GetAddressOf()));
 }
 
 void Dx::CCreateRtvAndDsvDescriptorHeaps()
@@ -411,7 +396,7 @@ void Dx::LoadModels()
 	tempV[3].TexC = { 1,1 };
 
 	UINT32 tempI[6] = { 0,1,2, 0, 2, 3 };
-	
+
 	RenderItem temp;
 	temp.mesh = new Mesh;
 	temp.mesh->Init(mDevice, &testTex, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, tempV, _countof(tempV), tempI, 6);
@@ -419,7 +404,7 @@ void Dx::LoadModels()
 	temp.y = temp.z = 0;
 	temp.scale = 4;
 	mapRenderer.AddRenderObject(temp);
-	
+
 	{
 		Vertex tempV[4];
 
@@ -459,7 +444,7 @@ void Dx::LoadModels()
 	//mirror
 	temp.mesh = new Mesh;
 	temp.mesh->Init(mDevice, &texStone, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, tempV, _countof(tempV), tempI, 6);
-	
+
 	temp.x = 9;
 	temp.z = -1;
 	temp.scale = 20;
@@ -470,15 +455,8 @@ void Dx::LoadModels()
 
 void Dx::FlushCommandQueue()
 {
-	mCurrentFence++;
-
-	DxThrowIfFailed(mCommandQueue->Signal(mFence.Get(), mCurrentFence));
-
-	if (mFence->GetCompletedValue() < mCurrentFence)
-	{
-		DxThrowIfFailed(mFence->SetEventOnCompletion(mCurrentFence, mFenceEvent));
-		WaitForSingleObject(mFenceEvent, INFINITE);
-	}
+	auto fence = mQueue.Signal();
+	mQueue.WaitUntil(fence);
 }
 
 void Dx::GetHardwareAdapter(IDXGIFactory4* pFactory, IDXGIAdapter1** ppAdapter)
@@ -556,10 +534,11 @@ void Dx::CalculateFrameStats()
 
 void Dx::Render(const GameTimer& gt)
 {
-	FlushCommandQueue();
+	mQueue.WaitUntil(mCmdAllocsFence[currFrameResourceIndex]);
+	auto& cmdListAlloc = mCommandAllocator[currFrameResourceIndex];
 
-	DxThrowIfFailed(mCommandAllocator->Reset());
-	DxThrowIfFailed(mCommandList->Reset(mCommandAllocator.Get(), nullptr));
+	DxThrowIfFailed(cmdListAlloc->Reset());
+	DxThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), nullptr));
 
 	D3D12_RESOURCE_BARRIER barrier;
 
@@ -577,12 +556,12 @@ void Dx::Render(const GameTimer& gt)
 
 	mCommandList->SetDescriptorHeaps(1, texManager.mSrvDescriptorHeap.GetAddressOf());
 	mCommandList->ClearRenderTargetView(CurrentBackBufferView(), DX::Colors::LightSteelBlue, 0, nullptr);
-	
+
 	//for(l: Layers) (ex. Game layer, UI layer......)
 	{
 		mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
-		mapRenderer.Draw(mCommandList);
+		mapRenderer.Draw(mCommandList, mQueue);
 	}
 
 	Transition(barrier, CurrentBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
@@ -591,11 +570,14 @@ void Dx::Render(const GameTimer& gt)
 	DxThrowIfFailed(mCommandList->Close());
 
 	ID3D12CommandList* cmdsLists[] = { mCommandList.Get() };
-	mCommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
+	mQueue.commandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
 
 	DxThrowIfFailed(mSwapChain->Present(0, 0));
 
 	mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
+	
+	mCmdAllocsFence[currFrameResourceIndex] = mQueue.Signal();
+	currFrameResourceIndex = (currFrameResourceIndex + 1) % FrameResource::FrameResources;
 }
 
 void Dx::OnResize()
@@ -613,7 +595,7 @@ void Dx::OnResize()
 
 	mScissorRect = { 0, 0, graphicSetting.width, graphicSetting.height };
 
-	DxThrowIfFailed(mCommandList->Reset(mCommandAllocator.Get(), nullptr));
+	DxThrowIfFailed(mCommandList->Reset(mCommandAllocator[0].Get(), nullptr));
 
 	// Release the previous resources we will be recreating.
 	for (int i = 0; i < SwapChainBufferCount; ++i)
@@ -683,7 +665,7 @@ void Dx::OnResize()
 
 	DxThrowIfFailed(mCommandList->Close());
 	ID3D12CommandList* cmdsLists[] = { mCommandList.Get() };
-	mCommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
+	mQueue.commandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
 
 	FlushCommandQueue();
 }
@@ -694,7 +676,7 @@ void Dx::Update(const GameTimer& gt)
 	mMainCamera.SetView();
 
 	mapRenderer.mMainCamera = mMainCamera;
-	mapRenderer.Update(gt);
+	mapRenderer.Update(gt, mQueue);
 }
 
 void Dx::UpdateGraphicSetting(GraphicSetting& setting)

@@ -142,9 +142,10 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CD3DX12_ROOT_PARAMETER.h" />
     <ClInclude Include="FMemoryPool.hpp" />
+    <ClInclude Include="FrameResource.h" />
     <ClInclude Include="GameMap.h" />
     <ClInclude Include="GameMapData.h" />
-    <ClInclude Include="GPUConstants.h" />
+    <ClInclude Include="GPUQueue.h" />
     <ClInclude Include="GPUResourceManager.hpp" />
     <ClInclude Include="GraphicSetting.h" />
     <ClInclude Include="RenderItem.h" />
@@ -165,7 +166,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="FrameResource.cpp" />
     <ClCompile Include="GameMap.cpp" />
+    <ClCompile Include="GPUQueue.cpp" />
     <ClCompile Include="RenderItem.cpp" />
     <ClCompile Include="CTexture.cpp" />
     <ClCompile Include="CTextureManager.cpp" />

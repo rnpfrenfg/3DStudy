@@ -28,7 +28,7 @@ public:
 class RenderItem
 {
 public:
-	bool dirty = true;
+	UINT dirty = 3;
 
 	Mesh* mesh = nullptr;
 
