@@ -129,6 +129,9 @@
     <ClInclude Include="GPUQueue.h">
       <Filter>Header File</Filter>
     </ClInclude>
+    <ClInclude Include="AnimationHelper.h">
+      <Filter>Header File</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -171,6 +174,9 @@
       <Filter>Source File</Filter>
     </ClCompile>
     <ClCompile Include="GPUQueue.cpp">
+      <Filter>Source File</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimationHelper.cpp">
       <Filter>Source File</Filter>
     </ClCompile>
   </ItemGroup>

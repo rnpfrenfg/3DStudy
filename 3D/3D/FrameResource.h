@@ -49,8 +49,6 @@ class FrameResource
 {
 public:
 	enum {FrameResources = 5};
-	
-	ComPtr<ID3D12CommandAllocator> CmdListAlloc;
 
 	UploadBuffer<ObjectConstants> mObjectCB;
 	UploadBuffer<MaterialConstants> mMaterialTestCB;

@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AnimationHelper.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CD3DX12_ROOT_PARAMETER.h" />
     <ClInclude Include="FMemoryPool.hpp" />
@@ -165,6 +166,7 @@
     <ClInclude Include="Vertex.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AnimationHelper.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="FrameResource.cpp" />
     <ClCompile Include="GameMap.cpp" />

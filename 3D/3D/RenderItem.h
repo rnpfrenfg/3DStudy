@@ -39,6 +39,7 @@ public:
 
 	CommandBundle _bundle;
 	UINT _index;
+	DX::XMMATRIX _world = DX::XMMatrixIdentity();
 
 	HRESULT _InitBundle(ComPtr<ID3D12Device> device, ComPtr<ID3D12PipelineState> pso);
 

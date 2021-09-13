@@ -9,6 +9,7 @@
 #include "FrameResource.h"
 #include "Camera.h"
 #include "GPUQueue.h"
+#include "AnimationHelper.h"
 
 //TODO : Rename
 class GameMap
@@ -43,15 +44,17 @@ public:
 	Camera mMainCamera;
 
 private:
+	void BuildRootSignature();
+	void BuildPSO();
+	void DefineSkullAnimation();
+
 	void UpdateFrameResource(const GameTimer& gt);
 	void UpdateMatrix(RenderItem& item, UploadBuffer<ObjectConstants>& objectCB);
 	void UpdateShadowMatrix(RenderItem& item, UploadBuffer<ObjectConstants>& objectCB);
 	void UpdateReflectedMatrix(RenderItem& item, UploadBuffer<ObjectConstants>& objectCB);
+	void UpdateScene(float dt);
 
 	void DrawRenderItems(ComPtr<ID3D12GraphicsCommandList>& cmdList, std::vector<RenderItem>& meshObjects);
-
-	void BuildRootSignature();
-	void BuildPSO();
 
 	void _AddItem(RenderItem& item, ComPtr<ID3D12PipelineState> pso, std::vector<RenderItem>& list);
 
@@ -71,9 +74,14 @@ private:
 	ComPtr<ID3D12PipelineState> mPsoDrawReflections = nullptr;
 	ComPtr<ID3D12PipelineState> mPsoShadow = nullptr;
 
+	ComPtr<ID3D12PipelineState> mPsoCompute;
+
 	bool mContainsMirror = false;
 	bool mShadow = false;
 
 	UINT newObjIndex;
+
+	float mAnimTimePos = 0;
+	BoneAnimation mSkullAnimation;
 };
 

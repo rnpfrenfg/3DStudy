@@ -15,8 +15,6 @@
 #include "GameMap.h"
 #include "FrameResource.h"
 
-#include "_work.h"//TODO
-
 #include <fstream>
 
 #include "tempd3dx.h"
@@ -87,8 +85,6 @@ private:
 	void UpdateGraphicSetting(GraphicSetting& setting);
 
 private:
-	_work work;
-
 	GPUQueue mQueue;
 	GameMap mapRenderer;
 	CTextureManager texManager;
