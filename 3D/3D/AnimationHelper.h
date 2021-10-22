@@ -2,6 +2,8 @@
 
 #include "include.h"
 
+#include <unordered_map>
+
 struct KeyFrame
 {
 	KeyFrame();
@@ -71,4 +73,43 @@ public:
 	}
 
 	std::vector<KeyFrame> Keyframes;
+};
+
+struct AnimationClip
+{
+	float GetClipStartTime()const;
+	float GetClipEndTime()const;
+
+	void Interpolate(float t, std::vector<DX::XMMATRIX>& boneTransforms)const;
+
+	std::vector<BoneAnimation> BoneAnimations;
+};
+
+class SkinnedData
+{
+public:
+
+	UINT BoneCount()const;
+
+	float GetClipStartTime(const std::string& clipName)const;
+	float GetClipEndTime(const std::string& clipName)const;
+
+	void Set(
+		std::vector<int>& boneHierarchy,
+		std::vector<DirectX::XMMATRIX>& boneOffsets,
+		std::unordered_map<std::string, AnimationClip>& animations);
+
+	// In a real project, you'd want to cache the result if there was a chance
+	// that you were calling this several times with the same clipName at 
+	// the same timePos.
+	void GetFinalTransforms(const std::string& clipName, float timePos,
+		std::vector<DirectX::XMMATRIX>& finalTransforms)const;
+
+private:
+	// Gives parentIndex of ith bone.
+	std::vector<int> mBoneHierarchy;
+
+	std::vector<DirectX::XMMATRIX> mBoneOffsets;
+
+	std::unordered_map<std::string, AnimationClip> mAnimations;
 };

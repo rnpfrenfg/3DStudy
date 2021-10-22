@@ -2,12 +2,12 @@
 
 #include "include.h"
 
-#include "CommandBundle.h"
 #include "Vertex.h"
 #include "UploadBuffer.h"
 #include "CTexture.h"
-#include "CTexture.h"
 #include "CTextureManager.h"
+
+#include "FrameResource.h"
 
 struct Mesh
 {
@@ -23,25 +23,25 @@ public:
 
 	D3D12_PRIMITIVE_TOPOLOGY topology;
 	int indexes;
+
+	DX::BoundingBox _bounds;//TODO,. 
 };
 
 class RenderItem
 {
 public:
-	UINT dirty = 3;
+	DX::XMMATRIX _world = DX::XMMatrixIdentity();
+
+	UINT _index;
+	UINT _instanceCounts;
+public:
+	UINT dirty = FrameResource::FrameResources;
 
 	Mesh* mesh = nullptr;
+	CTexture* texture = nullptr;
 
 	float x = 0;
 	float y = 0;
 	float z = 0;
 	float scale = 1;
-
-	CommandBundle _bundle;
-	UINT _index;
-	DX::XMMATRIX _world = DX::XMMatrixIdentity();
-
-	HRESULT _InitBundle(ComPtr<ID3D12Device> device, ComPtr<ID3D12PipelineState> pso);
-
-private:
 };

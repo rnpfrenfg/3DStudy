@@ -7,7 +7,8 @@ struct GraphicSetting
 	bool m4xMsaaState = false;
 	UINT m4xMsaaQuality = 0;
 
-	bool shadow = true;
+	bool shadow = false;
+	bool mirror = false;
 
 	int width = 800;
 	int height = 600;
@@ -23,8 +24,12 @@ Display mode
 Aspect ratio
 Resolution
 Brightnes
-Field Of View
+
+
+Field Of View // Camera
 FovAbillityScaling
+
+
 SprintViewShake
 
 {

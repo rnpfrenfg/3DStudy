@@ -19,6 +19,7 @@
 #include <dxgi1_4.h>
 #include <DirectXColors.h>
 #include <wrl.h>
+#include <DirectXCollision.h>
 
 namespace DX = DirectX;
 namespace MS = Microsoft;
@@ -40,7 +41,7 @@ using MS::WRL::ComPtr;
 #include <comdef.h>
 #include <thread>
 
-#define CDEBUG DEBUG|_DEBUG
+#define CDEBUG DEBUG|_DEBUG |1
 
 #if CDEBUG
 #define DxThrowIfFailed(x) if(FAILED(x)){std::cout<<"[Error::"<<std::hex<<x<<std::dec<<"] At " <<__FILE__<<" :: "<<__LINE__ <<'\n';while(true);}

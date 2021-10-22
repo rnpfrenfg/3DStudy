@@ -76,11 +76,46 @@ LRESULT Dx::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		((MINMAXINFO*)lParam)->ptMinTrackSize.y = 200;
 		return 0;
 	case WM_LBUTTONDOWN:
+	{
+		WORD newX = LOWORD(lParam);
+		WORD newY = HIWORD(lParam);
+		mouseDown.x = newX;
+		mouseDown.y = newY;
+		return 0;
+	}
 	case WM_MBUTTONDOWN:
 	case WM_RBUTTONDOWN:
 		//OnMouseDown(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 		return 0;
 	case WM_LBUTTONUP:
+
+	{
+		WORD newX = LOWORD(lParam);
+		WORD newY = HIWORD(lParam);
+		
+		float middleX = x;
+		float middleZ = z;
+
+		float vx = (2.0f * newX / (float)graphicSetting.width - 1.0f) / mMainCamera.mProj.r[0].m128_f32[0];
+		float vy = (-2.0f * newY / (float)graphicSetting.height + 1.0f) / mMainCamera.mProj.r[1].m128_f32[1];
+
+		float left = x + vx * cameraHeight;
+		float right = z + vy * cameraHeight;
+
+		std::cout <<'\n'<< middleX<<'\n';
+		std::cout << middleZ << '\n';
+		std::cout << vx*30 << '\n';
+		std::cout << vy * 30 << '\n';
+		std::cout << left << '\n';
+		std::cout << right << '\n';
+
+		skullObject.x = left;
+		skullObject.z = right;
+		skullObject.y = 0;
+		mapRenderer.AddRenderObject(skullObject);
+	}
+
+		return 0;
 	case WM_MBUTTONUP:
 	case WM_RBUTTONUP:
 		//OnMouseUp(wParam........);
@@ -89,41 +124,44 @@ LRESULT Dx::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		//OnMouseMove(wParam, ........);
 	{
 		WORD newX = LOWORD(lParam);
-		float difX = newX - mouseX;
-		difX = DX::XMConvertToRadians(difX * gameSetting.mouseSensivity);
-
 		WORD newY = HIWORD(lParam);
-		float difY = newY - mouseY;
-		difY = DX::XMConvertToRadians(difY * gameSetting.mouseSensivity);
 
-		mMainCamera.Rotate(difX, difY);
+		if (wParam & MK_LBUTTON)
+		{
+			float dx = -DX::XMConvertToRadians(0.25f * static_cast<float>(newX - mouseX));
+			float dy = DX::XMConvertToRadians(0.25f * static_cast<float>(newY - mouseY));
+
+			mMainCamera.Pitch(dy);
+			mMainCamera.RotateY(dx);
+		}
 
 		mouseX = newX;
 		mouseY = newY;
-
 	}
 	return 0;
 	case WM_CHAR:
-		std::cout << (char)wParam;
+	{
+		float dt = 1;
 		switch ((char)wParam)
 		{
 		case 'w':
 		case 'W':
-			z -= 1;
+			mMainCamera.Walk(10.0f * dt);
 			return 0;
 		case 's':
 		case 'S':
-			z += 1;
+			mMainCamera.Walk(-10.0f * dt);
 			return 0;
 		case 'a':
 		case 'A':
-			x += 1;
+			mMainCamera.Strafe(-10.0f * dt);
 			return 0;
 		case 'd':
 		case 'D':
-			x -= 1;
+			mMainCamera.Strafe(10.0f * dt);
 			return 0;
 		}
+	}
 	case WM_KEYDOWN:
 		return 0;
 	case WM_DESTROY:
@@ -228,15 +266,17 @@ void Dx::InitDirectX()
 	CCreateSwapChain();
 	CCreateRtvAndDsvDescriptorHeaps();
 
-	DxThrowIfFailed(texManager.Init(mDevice, mCbvSrvUavDescriptorSize));
-
 	for (int i = 0; i < FrameResource::FrameResources; i++)
 	{
 		DxThrowIfFailed(mDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&mCommandAllocator[i])));
 	}
 	DxThrowIfFailed(mDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, mCommandAllocator[0].Get(), nullptr, IID_PPV_ARGS(&mCommandList)));
 
+	graphicSetting.shadow = false;
+	graphicSetting.mirror = false;
 	mapRenderer.Init(graphicSetting, mDevice);
+
+	DxThrowIfFailed(texManager.Init(mDevice, mCbvSrvUavDescriptorSize));
 
 	{//LoadTextures
 		DxThrowIfFailed(TextureLoader::Load(L"sample.dds", mCommandList, mDevice, testTex));
@@ -245,14 +285,15 @@ void Dx::InitDirectX()
 		texManager.AddTexture(texWirefence);
 		DxThrowIfFailed(TextureLoader::Load(L"stone.dds", mCommandList, mDevice, texStone));
 		texManager.AddTexture(texStone);
+		DxThrowIfFailed(TextureLoader::Load(L"cubemap.dds", mCommandList, mDevice, texCubemap));
+		texManager.AddCubeMap(texCubemap);
 	}
 
 	DxThrowIfFailed(mCommandList->Close());
 	mQueue.commandQueue->ExecuteCommandLists(1, (ID3D12CommandList* const*)mCommandList.GetAddressOf());
 	FlushCommandQueue();
-
 	mCommandList->SetGraphicsRootDescriptorTable(0, texManager.mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-
+//TODO 
 	LoadModels();
 }
 
@@ -373,12 +414,11 @@ void Dx::LoadModels()
 
 	for (int i = 0; i < 3; i++)
 	{
-		RenderItem obj;
-		obj.x = obj.z = 10 * i;
-		obj.y = 0;
-		obj.scale = 0.5;
-		obj.mesh = &skullMesh;
-		mapRenderer.AddRenderObject(obj);
+		skullObject.x = skullObject.z = 10 * i;
+		skullObject.y = 0;
+		skullObject.scale = 0.5;
+		skullObject.mesh = &skullMesh;
+		mapRenderer.AddRenderObject(skullObject);
 	}
 
 	Vertex tempV[4];
@@ -424,7 +464,7 @@ void Dx::LoadModels()
 		temp.mesh = new Mesh;
 		temp.mesh->Init(mDevice, &testTex, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, tempV, _countof(tempV), tempI, 6);
 		const float tttttt = 50;
-		float div = 1;
+		float div = 3;
 		temp.scale = div;
 		for (float i = -tttttt; i < tttttt; i+= div)
 			for (float j = -tttttt; j < tttttt; j+= div)
@@ -439,16 +479,9 @@ void Dx::LoadModels()
 	temp.mesh->Init(mDevice, &texWirefence, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, tempV, _countof(tempV), tempI, 6);
 	temp.x = 7;
 	temp.scale = 7;
-	mapRenderer.AddTransparent(temp);
+	mapRenderer.AddRenderObject(temp);
 
-	//mirror
-	temp.mesh = new Mesh;
-	temp.mesh->Init(mDevice, &texStone, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, tempV, _countof(tempV), tempI, 6);
-
-	temp.x = 9;
-	temp.z = -1;
-	temp.scale = 20;
-	mapRenderer.AddMirror(temp);
+	DxThrowIfFailed(mapRenderer.EndAddConstRenderObject());
 
 	cout << "END\n";
 }
@@ -553,8 +586,6 @@ void Dx::Render(const GameTimer& gt)
 	D3D12_CPU_DESCRIPTOR_HANDLE dsView = DepthStencilView();
 	mCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsView);
 
-
-	mCommandList->SetDescriptorHeaps(1, texManager.mSrvDescriptorHeap.GetAddressOf());
 	mCommandList->ClearRenderTargetView(CurrentBackBufferView(), DX::Colors::LightSteelBlue, 0, nullptr);
 
 	//for(l: Layers) (ex. Game layer, UI layer......)
@@ -672,9 +703,6 @@ void Dx::OnResize()
 
 void Dx::Update(const GameTimer& gt)
 {
-	mMainCamera.SetPos(x, 1, z);
-	mMainCamera.SetView();
-
 	mapRenderer.mMainCamera = mMainCamera;
 	mapRenderer.Update(gt, mQueue);
 }

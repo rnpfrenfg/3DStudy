@@ -31,14 +31,8 @@
     <Filter Include="Header File\Resource\Loader">
       <UniqueIdentifier>{5ebf2ffd-7679-49be-bd4e-a29356663c6d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source File\Util">
-      <UniqueIdentifier>{c235a53e-9ca4-45de-9f56-153c2ca466f4}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header File\Util">
       <UniqueIdentifier>{c9934f7f-3f3a-412a-bba6-f0fe4af71a2b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header File\__TODO">
-      <UniqueIdentifier>{d8a6cc1d-2ff7-4456-859e-0042fb7fec68}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header File\Object">
       <UniqueIdentifier>{68db0183-02e4-4459-8418-2b507e880cb1}</UniqueIdentifier>
@@ -54,6 +48,9 @@
     </Filter>
     <Filter Include="Source File\System">
       <UniqueIdentifier>{7f682d83-6131-4649-9f5d-af2615ae1a0c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source File\System\Util">
+      <UniqueIdentifier>{c235a53e-9ca4-45de-9f56-153c2ca466f4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -111,9 +108,6 @@
     <ClInclude Include="tempd3dx.h">
       <Filter>Header File\Util</Filter>
     </ClInclude>
-    <ClInclude Include="GameMap.h">
-      <Filter>Header File\GameSystem</Filter>
-    </ClInclude>
     <ClInclude Include="Light.h">
       <Filter>Header File\Resource</Filter>
     </ClInclude>
@@ -130,6 +124,12 @@
       <Filter>Header File</Filter>
     </ClInclude>
     <ClInclude Include="AnimationHelper.h">
+      <Filter>Header File</Filter>
+    </ClInclude>
+    <ClInclude Include="GameRenderer.h">
+      <Filter>Header File\GameSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="FbxLoader.h">
       <Filter>Header File</Filter>
     </ClInclude>
   </ItemGroup>
@@ -150,7 +150,7 @@
       <Filter>Source File\Resource</Filter>
     </ClCompile>
     <ClCompile Include="MMFile.cpp">
-      <Filter>Source File\Util</Filter>
+      <Filter>Source File\System\Util</Filter>
     </ClCompile>
     <ClCompile Include="Camera.cpp">
       <Filter>Source File\Object</Filter>
@@ -162,12 +162,9 @@
       <Filter>Source File\System</Filter>
     </ClCompile>
     <ClCompile Include="GameTimer.cpp">
-      <Filter>Source File\Util</Filter>
+      <Filter>Source File\System\Util</Filter>
     </ClCompile>
     <ClCompile Include="CTextureManager.cpp">
-      <Filter>Source File\GameSystem</Filter>
-    </ClCompile>
-    <ClCompile Include="GameMap.cpp">
       <Filter>Source File\GameSystem</Filter>
     </ClCompile>
     <ClCompile Include="FrameResource.cpp">
@@ -179,13 +176,16 @@
     <ClCompile Include="AnimationHelper.cpp">
       <Filter>Source File</Filter>
     </ClCompile>
+    <ClCompile Include="GameRenderer.cpp">
+      <Filter>Source File\GameSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="FbxLoader.cpp">
+      <Filter>Source File</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="shaders.txt">
+    <Text Include="computeShader.txt">
       <Filter>Header File</Filter>
-    </Text>
-    <Text Include="todo.txt">
-      <Filter>Header File\__TODO</Filter>
     </Text>
   </ItemGroup>
 </Project>

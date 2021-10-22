@@ -13,14 +13,14 @@ Dx* dx;
 
 inline void Test()
 {
-	__try
+	//__try
 	{
 		if (dx->Init())
 		{
 			dx->Run();
 		}
 	}
-	__except (EXCEPTION_EXECUTE_HANDLER)
+	//__except (EXCEPTION_EXECUTE_HANDLER)
 	{
 		MessageBox(NULL, L"Error", L"Error", MB_OK);
 	}
@@ -28,8 +28,6 @@ inline void Test()
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int cmdShow)
 {
-	CCreateConsole();
-
 	if (!DX::XMVerifyCPUSupport())
 	{
 		MessageBox(NULL, L"XMVerifyCPUSupport", TEXT("Notice"), MB_OK);

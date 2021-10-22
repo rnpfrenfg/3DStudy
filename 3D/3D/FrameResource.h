@@ -50,11 +50,10 @@ class FrameResource
 public:
 	enum {FrameResources = 5};
 
-	UploadBuffer<ObjectConstants> mObjectCB;
-	UploadBuffer<MaterialConstants> mMaterialTestCB;
+	UploadBuffer<ObjectConstants> ObjectDataBuffer;
+	UploadBuffer<MaterialConstants> MaterialBuffer;
 	UploadBuffer<FrameConstants> mFrameCB;
 	FrameConstants frameResource;
-	FrameConstants reflectedFrameResoruce;
 
 	UINT64 fence = 0;
 };

@@ -88,10 +88,12 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>FBXInclude\include;..\..\TempName\TempName;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>FBXInclude\lib;TempNameGame</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -102,12 +104,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>FBXInclude\include;..\..\TempName\TempName;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>FBXInclude\lib;TempNameGame</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -116,10 +120,12 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>FBXInclude\include;..\..\TempName\TempName;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>FBXInclude\lib;TempNameGame</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -130,21 +136,24 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>FBXInclude\include;..\..\TempName\TempName;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>FBXInclude\lib;TempNameGame</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AnimationHelper.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CD3DX12_ROOT_PARAMETER.h" />
+    <ClInclude Include="FbxLoader.h" />
     <ClInclude Include="FMemoryPool.hpp" />
     <ClInclude Include="FrameResource.h" />
-    <ClInclude Include="GameMap.h" />
+    <ClInclude Include="GameRenderer.h" />
     <ClInclude Include="GameMapData.h" />
     <ClInclude Include="GPUQueue.h" />
     <ClInclude Include="GPUResourceManager.hpp" />
@@ -168,8 +177,9 @@
   <ItemGroup>
     <ClCompile Include="AnimationHelper.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="FbxLoader.cpp" />
     <ClCompile Include="FrameResource.cpp" />
-    <ClCompile Include="GameMap.cpp" />
+    <ClCompile Include="GameRenderer.cpp" />
     <ClCompile Include="GPUQueue.cpp" />
     <ClCompile Include="RenderItem.cpp" />
     <ClCompile Include="CTexture.cpp" />
@@ -183,8 +193,7 @@
     <ClCompile Include="Vertex.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="shaders.txt" />
-    <Text Include="todo.txt" />
+    <Text Include="computeShader.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

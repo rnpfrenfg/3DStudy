@@ -12,7 +12,7 @@
 #include "CTextureManager.h"
 #include "GraphicSetting.h"
 #include "GPUQueue.h"
-#include "GameMap.h"
+#include "GameRenderer.h"
 #include "FrameResource.h"
 
 #include <fstream>
@@ -86,7 +86,7 @@ private:
 
 private:
 	GPUQueue mQueue;
-	GameMap mapRenderer;
+	GameRenderer mapRenderer;
 	CTextureManager texManager;
 
 	Camera mMainCamera;
@@ -104,6 +104,7 @@ private:
 	CTexture testTex;
 	CTexture texWirefence;
 	CTexture texStone;
+	CTexture texCubemap;
 
 	UINT currFrameResourceIndex = 0;
 	UINT mCmdAllocsFence[FrameResource::FrameResources];
@@ -143,4 +144,11 @@ private:
 	float x = 0;
 	float z = 0;
 	float y = 0;
+
+	float landHigh = 0;
+
+	POINT mouseDown;
+
+	RenderItem skullObject;//Temp test
+	float cameraHeight = 30;
 };

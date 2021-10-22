@@ -6,23 +6,28 @@
 
 class CTextureManager
 {
-	CTextureManager* singleton = nullptr;
+	static CTextureManager* singleton;
 public:
 	CTextureManager() { if (singleton != nullptr) DxThrowIfFailed(-1); singleton = this; }
 
+	static CTextureManager* GetInstance() { return singleton; }
+
 	HRESULT Init(ComPtr<ID3D12Device> device, UINT srvDescriptorSize);
 
-	void AddTexture(CTexture& t);
+	int AddTexture(CTexture& t);
+	int AddCubeMap(CTexture& t);
 
 	ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap;
 
 private:
+	HRESULT BuildSrvDescriptorHeap();
+
 	ComPtr<ID3D12Device> mDevice;
-	SIZE_T mSrvDescriptorSize;
-	SIZE_T newTexIndex = 0;
+	int mSrvDescriptorSize;
+	int maxTextures = 7;
+	int newTexIndex = 0;
 
 	CTexture* lastTexture = nullptr;
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC tempDesc = {};
 };
-

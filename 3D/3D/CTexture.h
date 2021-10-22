@@ -11,5 +11,5 @@ public:
 	ComPtr<ID3D12Resource> resource;
 	UploadBufferBySize uploadBuffer;
 
-	D3D12_GPU_DESCRIPTOR_HANDLE _handle;
+	D3D12_GPU_DESCRIPTOR_HANDLE _handle = { 0, };
 };
