@@ -3,5 +3,5 @@
 #ifdef TETRISAPI
 
 #else
-#define TETRISAPI extern "C" __declspec(dllimport)
+#define TETRISAPI __declspec(dllimport)
 #endif

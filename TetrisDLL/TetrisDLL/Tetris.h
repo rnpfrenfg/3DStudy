@@ -2,11 +2,20 @@
 
 #include "include.h"
 
-#include <random>
+#include "EventManager.h"
+#include "BlockMaker.h"
 
 namespace TetrisSpace
 {
-	struct HoldingBlock
+	class TETRISAPI Tetris;
+
+	enum { boardWidth = 10 };
+	enum { boardHeight = 20 };
+
+	typedef int(*BoardPointer)[boardWidth];
+	typedef bool(*newBlockTimeFunc)(Tetris* tetris, float* timeAfterLastBlockStart);
+
+	struct TETRISAPI HoldingBlock
 	{
 		int x;
 		int y;
@@ -15,23 +24,22 @@ namespace TetrisSpace
 	};
 
 	//7= block, 4= rotate, 4= blocks, 2= x,y
-	TETRISAPI int NumsToBlock[7][4][4][2];
+	TETRISAPI extern const int NumsToBlock[8][4][4][2];
 
-	TETRISAPI class Tetris
+	class TETRISAPI Tetris
 	{
-		enum { boardWidth = 10 };
-		enum { boardHeight = 20 };
 	public:
 		Tetris();
 		~Tetris() = default;
 
-		int GetRandomBlock();
+		EventManager eventManager;
 
-		void NewGameReady();
+		void NewGameReady(BlockMakerImpl* maker, newBlockTimeFunc = nullptr);
 		void Start();
 		void Update(float dt);
 		void SudoEnd();
-		bool IsGameing();
+		bool IsGaming();
+		void SudoGameOn();
 
 		void SudoSetBlock(int type);
 		void HoldBlock();
@@ -42,23 +50,22 @@ namespace TetrisSpace
 		void MoveBlockRight();
 		void Down();
 
-		int (*GetBoard())[boardWidth];
+		float PlayTime();
+		int ClearedLine();
+
+		BoardPointer GetBoard();
 		int GetWidth();
 		int GetHeight();
 
 		int GetHoldingType();
 		HoldingBlock GetNowBlock();
 
-		bool IsGaming();
-
-		//to use on nextwork
-		void SetNextBlocks(int* next, int size);
-		void SetRandomNextBlocks();
+		//return : cleared
+		int LineClear();
 
 	private:
 		int IndexToInRange(int index);
 
-		void OnNewBlockStart();
 		void MoveToDefaultHold();
 		void GameEnd();
 		void NextBlock();
@@ -69,24 +76,24 @@ namespace TetrisSpace
 
 		void OnChangeBlock();
 
-		std::random_device rd;
-		std::mt19937 gen;
-		std::uniform_int_distribution<int> distribution;
-
 		int holding = -1;
-		const int defHoldX = boardWidth/2;
-		const int defHoldY = 5;
-		int holdX;
-		int holdY;
+		const int defHoldX = boardWidth / 2;
+		const int defHoldY = 2;
+		int blockX;
+		int blockY;
 		int blockType;
-		int rotation;
+		int blockRotation;
 
-		long remainTime = 0;
+		int clearedLine;
+		float playTime;
+
+		float remainTime = 0;
 		bool gameEnd = true;
-		bool board[boardHeight][boardWidth] = { 0, };
-		//to use on nextBlocks
-		int lastBlock = 0;
-		int nextBlocks[1000] = { 0, };
-		int nextBlockSize = 0;
+		int board[boardHeight][boardWidth] = { 0, };
+
+		BlockMakerImpl* blockMaker;
+		int blockMakerIndex = 0;
+
+		newBlockTimeFunc newBlockFunc;
 	};
 }

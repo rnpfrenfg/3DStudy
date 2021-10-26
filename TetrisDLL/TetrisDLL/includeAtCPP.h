@@ -1,3 +1,3 @@
 #pragma once
 
-#define TETRISAPI extern "C" __declspec(dllexport)
+#define TETRISAPI __declspec(dllexport)

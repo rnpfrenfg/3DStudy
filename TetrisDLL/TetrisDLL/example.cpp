@@ -3,7 +3,9 @@
 #include <time.h>
 
 #include <iostream>
+#include <thread>
 
+#include "EventManager.h"
 #include "Tetris.h"
 
 
@@ -14,6 +16,8 @@ How to run at visual studio:
 	-> properties
 	-> Common Properties -> General -> Configuration type = .exe;
 */
+
+#define CLASSNAME L"TetrisTest"
 
 using namespace TetrisSpace;
 
@@ -27,6 +31,7 @@ void CCreateConsole()
 }
 
 int sudoBlockNow;
+BlockMakerImpl maker;
 
 LRESULT CALLBACK BlockRotateTestMSG(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -35,7 +40,12 @@ LRESULT CALLBACK BlockRotateTestMSG(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 	case WM_CREATE:
 		return 0;
 	case WM_PAINT:
-		return 0;
+	{
+		PAINTSTRUCT ps;
+		HDC hdc = BeginPaint(hwnd, &ps);
+		EndPaint(hwnd, &ps);
+	}
+	return 0;
 	case WM_KEYDOWN:
 		switch (wParam)
 		{
@@ -56,7 +66,48 @@ LRESULT CALLBACK BlockRotateTestMSG(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 		}
 		return 0;
 	case WM_DESTROY:
-		PostQuitMessage(0);
+		return 0;
+	}
+	return DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
+LRESULT CALLBACK PlayTestMSG(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	switch (msg)
+	{
+	case WM_CREATE:
+		return 0;
+	case WM_PAINT:
+	{
+		PAINTSTRUCT ps;
+		HDC hdc = BeginPaint(hwnd, &ps);
+		EndPaint(hwnd, &ps);
+	}
+	return 0;
+	case WM_KEYDOWN:
+		switch (wParam)
+		{
+		case VK_LEFT:
+			tetris.MoveBlockLeft();
+			return 0;
+		case VK_RIGHT:
+			tetris.MoveBlockRight();
+			return 0;
+		case VK_DOWN:
+			tetris.Down();
+			return 0;
+		case VK_UP:
+			tetris.RotateRight();
+			return 0;
+		case VK_SPACE:
+			tetris.DropBlock();
+			return 0;
+		case VK_SHIFT:
+			tetris.HoldBlock();
+			return 0;
+		}
+		return 0;
+	case WM_DESTROY:
 		return 0;
 	}
 	return DefWindowProc(hwnd, msg, wParam, lParam);
@@ -79,13 +130,13 @@ void RenderBoard()
 	}
 
 	auto now = tetris.GetNowBlock();
-	
+
 	for (int i = 0; i < 4; i++)
 	{
 		int x = TetrisSpace::NumsToBlock[now.type][now.rotate][i][0];
 		int y = TetrisSpace::NumsToBlock[now.type][now.rotate][i][1];
 
-		nowBoard[x + now.x][y + now.y] = 'O';
+		nowBoard[y + now.y][x + now.x] = 'O';
 	}
 
 	for (int i = 0; i < tetris.GetHeight(); i++)
@@ -97,12 +148,13 @@ void RenderBoard()
 		std::cout << '\n';
 	}
 
-	std::cout << "Holding : " << now.type<<'\n';
+	std::cout << "block : " << now.type << '\n';
 	std::cout << "Rotation : " << now.rotate << '\n';
-
+	std::cout << "Hold : " << tetris.GetHoldingType() << '\n';
+	std::cout << "Gameing : " << tetris.IsGaming() << '\n';
 }
 
-void SetWindow(HINSTANCE hInst, LRESULT (CALLBACK *msgProc)(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam))
+void SetWindow(HINSTANCE hInst, LRESULT(CALLBACK* msgProc)(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam))
 {
 	WNDCLASSEX winc;
 	winc.cbSize = sizeof(winc);
@@ -115,7 +167,7 @@ void SetWindow(HINSTANCE hInst, LRESULT (CALLBACK *msgProc)(HWND hwnd, UINT msg,
 	winc.cbWndExtra = 0;
 	winc.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
 	winc.lpszMenuName = NULL;
-	winc.lpszClassName = L"TetrisTest";
+	winc.lpszClassName = CLASSNAME;
 	winc.lpfnWndProc = msgProc;
 
 	if (!(RegisterClassEx(&winc)))
@@ -123,7 +175,7 @@ void SetWindow(HINSTANCE hInst, LRESULT (CALLBACK *msgProc)(HWND hwnd, UINT msg,
 		return;
 	}
 
-	auto mhMainWnd = CreateWindow(L"TetrisTest", L"Commander", WS_OVERLAPPEDWINDOW, 0, 0, 300, 100, 0, 0, hInst, 0);
+	auto mhMainWnd = CreateWindow(CLASSNAME, L"Commander", WS_OVERLAPPEDWINDOW, 0, 0, 300, 100, 0, 0, hInst, 0);
 	if (!mhMainWnd)
 	{
 		MessageBox(0, L"CreateWindow Failed.", 0, 0);
@@ -132,24 +184,26 @@ void SetWindow(HINSTANCE hInst, LRESULT (CALLBACK *msgProc)(HWND hwnd, UINT msg,
 
 	ShowWindow(mhMainWnd, SW_SHOW);
 	UpdateWindow(mhMainWnd);
+	ShowWindow(mhMainWnd, SW_SHOW);
+	UpdateWindow(mhMainWnd);
 }
 
-int BlockRotateTest(HINSTANCE instance)
+void BlockRotateTest(HINSTANCE instance)
 {
 	SetWindow(instance, BlockRotateTestMSG);
 
 	MSG msg{ 0, };
 	sudoBlockNow = 0;
 
-	tetris.NewGameReady();
+	tetris.NewGameReady(&maker);
 	tetris.Start();
 
 	clock_t startTime = clock();
 	float dt;
-	
-	while (msg.message != WM_QUIT)
+
+	while (msg.message != WM_DESTROY)
 	{
-		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE| PM_QS_INPUT))
+		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
@@ -163,24 +217,67 @@ int BlockRotateTest(HINSTANCE instance)
 			RenderBoard();
 		}
 	}
-	return (int)msg.wParam;
+
+	UnregisterClass(CLASSNAME, instance);
 }
 
-void PlayTest(HINSTANCE)
+void BeepFunction(void* p)
 {
-	tetris.NewGameReady();
+	std::cout << '\a';//beep
+}
+
+void OnGameEnd(TetrisEventData::GameEnd* data)
+{
+	wchar_t result[100];
+	wchar_t msg[] = L"Your score : %d";
+	wsprintf(result, msg, data->tetris->ClearedLine());
+	MessageBox(NULL, result, L"Game Over!!", MB_OK);
+}
+
+void PlayTest(HINSTANCE instance)
+{
+	tetris.eventManager.AddEventListener(EventType::LINE_CLEARED, BeepFunction);
+	tetris.eventManager.AddEventListener(EventType::GAME_END, (TetrisSpace::EventFunction)OnGameEnd);
+
+	SetWindow(instance, PlayTestMSG);
+
+	MSG msg{ 0, };
+	sudoBlockNow = 0;
+
+	tetris.NewGameReady(&maker);
 	tetris.Start();
+
+	clock_t lastTime = clock();
+	float dt;
+
+	while (msg.message != WM_QUIT)
+	{
+		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+		else
+		{
+			Sleep(100);
+			auto t = clock();
+			dt = t - lastTime;
+			dt /= 1000;
+			lastTime = t;
+			tetris.Update(dt);
+			RenderBoard();
+		}
+	}
+
+	UnregisterClass(CLASSNAME, instance);
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int cmdShow)
 {
 	CCreateConsole();
 
-	while (true)
-	{
-		BlockRotateTest(hInstance);
-		PlayTest(hInstance);
-	}
+	PlayTest(hInstance);
+	//BlockRotateTest(hInstance);
 
 	MessageBox(NULL, L"PROGRAM ERROR END", L"Notice", MB_OK);
 	Sleep(INFINITE);

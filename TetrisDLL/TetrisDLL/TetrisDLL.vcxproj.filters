@@ -15,32 +15,26 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Event.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="EventType.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Tetris.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="TetrisAPI.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="include.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="includeAtCPP.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="BlockMaker.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="EventManager.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="includeAtCPP.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Event.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="Tetris.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
@@ -48,6 +42,9 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="BlockMaker.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="EventManager.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

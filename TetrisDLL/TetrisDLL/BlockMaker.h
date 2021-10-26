@@ -1,17 +1,35 @@
 #pragma once
-class BlockMaker
+
+#include "include.h"
+
+#include <random>
+
+namespace TetrisSpace
 {
-public:
-	BlockMaker();
-	BlockMaker(int defMakeBlocks, int);
+	class TETRISAPI BlockMaker
+	{
+		virtual int GetBlock(int idx) = 0;
+	};
 
-	void Make();
+	class TETRISAPI BlockMakerImpl : BlockMaker
+	{
+	public:
+		BlockMakerImpl(int newBlockSize = 700);
+		~BlockMakerImpl();
 
-	int Size();
-	int GetBlock(int idx);
+		int GetBlock(int idx) override;
 
-private:
-	int blocks;
+	private:
+		void InitBlock(int* arr, int size);
 
-};
+		int newSize;
+		int** blocks = nullptr;
 
+		int blockPSize = 0;
+		int nowBlockPSize = 0;
+
+		std::random_device rd;
+		std::mt19937 gen;
+		std::uniform_int_distribution<int> distribution;
+	};
+}

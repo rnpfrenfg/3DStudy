@@ -3,10 +3,14 @@
 
 namespace TetrisSpace
 {
-	int NumsToBlock[7][4][4][2] =
+	TETRISAPI const extern int NumsToBlock[8][4][4][2] = 
 	{
-		//square
-		0, 0, 1, 0, 0, 1, 1, 1,
+		0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0,
+			//square
+			0, 0, 1, 0, 0, 1, 1, 1,
 			0, 0, 1, 0, 0, 1, 1, 1,
 			0, 0, 1, 0, 0, 1, 1, 1,
 			0, 0, 1, 0, 0, 1, 1, 1,
@@ -41,24 +45,41 @@ namespace TetrisSpace
 			0, 0, -1, 0, 0, 1, 1, 1,
 			0, 0, 0, -1, -1, 0, -1, 1,
 	};
-
 	Tetris::Tetris()
 	{
 		holding = -1;
-
-
-		gen = std::mt19937(rd());
-		distribution = std::uniform_int_distribution<int>(0, 6);
 	}
 
-	void Tetris::NewGameReady()
+	bool DefaultNewBlockTimeFunc(Tetris* tetris, float* timeAfterLastBlockStart)
 	{
-		//TODO
+		if (*timeAfterLastBlockStart > 1)
+		{
+			*timeAfterLastBlockStart -= 1;
+			return true;
+		}
+		return false;
 	}
 
-	int Tetris::GetRandomBlock()
+	void Tetris::NewGameReady(BlockMakerImpl* maker, newBlockTimeFunc func)
 	{
-		return distribution(gen);
+		if (func == nullptr)
+			newBlockFunc = DefaultNewBlockTimeFunc;
+		else
+			newBlockFunc = func;
+
+		for (int i = 0; i < boardHeight; i++)
+		{
+			for (int j = 0; j < boardWidth; j++)
+			{
+				board[i][j] = 0;
+			}
+		}
+		this->blockMaker = maker;
+		blockMakerIndex = 0;
+		NextBlock();
+		
+		clearedLine = 0;
+		playTime = 0;
 	}
 
 	void Tetris::SudoSetBlock(int type)
@@ -66,9 +87,14 @@ namespace TetrisSpace
 		blockType = IndexToInRange(type);
 	}
 
-	int(*Tetris::GetBoard())[boardWidth]
+	void Tetris::SudoGameOn()
 	{
-		return (int(*)[boardWidth])board;
+		gameEnd = false;
+	}
+
+	BoardPointer Tetris::GetBoard()
+	{
+		return (BoardPointer)board;
 	}
 
 	void Tetris::Start()
@@ -79,8 +105,8 @@ namespace TetrisSpace
 	}
 	void Tetris::MoveToDefaultHold()
 	{
-		holdX = defHoldX;
-		holdY = defHoldY;
+		blockX = defHoldX;
+		blockY = defHoldY;
 	}
 	bool Tetris::IsGaming()
 	{
@@ -88,28 +114,34 @@ namespace TetrisSpace
 	}
 	void Tetris::Update(float dt)
 	{
-		while (dt - remainTime > 20)
+		if (gameEnd)
+			return;
+
+		remainTime += dt;
+		playTime += dt;
+
+		while (newBlockFunc(this, &remainTime))
 		{
-			remainTime += 20;
 			Down();
 		}
 	}
 
+	float Tetris::PlayTime()
+	{
+		return playTime;
+	}
+
+	int Tetris::ClearedLine()
+	{
+		return clearedLine;
+	}
+
 	void Tetris::NextBlock()
 	{
-		if (lastBlock == nextBlockSize)
-		{
-			//TODO
-			return;
-		}
-		blockType = nextBlocks[lastBlock];
-		if (blockType < 0 || blockType > 6)
-			return;//TODO
-		lastBlock++;
-		MoveToDefaultHold();
-		remainTime = 0;
-		if (!(CanSetBlock(blockType, rotation, holdX, holdY)))
-			GameEnd();
+		blockType = blockMaker->GetBlock(blockMakerIndex);
+		blockMakerIndex++;
+
+		OnChangeBlock();
 	}
 
 	int Tetris::GetWidth()
@@ -130,20 +162,18 @@ namespace TetrisSpace
 	HoldingBlock Tetris::GetNowBlock()
 	{
 		HoldingBlock block;
-		block.rotate = rotation;
-		block.x = holdX;
-		block.y = holdY;
+		block.rotate = blockRotation;
+		block.x = blockX;
+		block.y = blockY;
 		block.type = blockType;
 		return block;
 	}
 
-	void Tetris::OnNewBlockStart()
-	{
-		//TODO
-	}
-
 	void Tetris::HoldBlock()
 	{
+		if (gameEnd)
+			return;
+
 		if (holding == -1)
 		{
 			holding = blockType;
@@ -154,16 +184,6 @@ namespace TetrisSpace
 			auto temp = holding;
 			holding = blockType;
 			blockType = temp;
-		}
-	}
-
-	void Tetris::SetRandomNextBlocks()
-	{
-		nextBlockSize = 700;
-		int i;
-		for (i = 0; i < nextBlockSize; i++)
-		{
-			nextBlocks[i] = GetRandomBlock();
 		}
 	}
 
@@ -179,114 +199,237 @@ namespace TetrisSpace
 	void Tetris::GameEnd()
 	{
 		gameEnd = true;
-	}
-
-	void Tetris::SetNextBlocks(int* next, int size)
-	{
-		if (size < 1)
-			return;
-		int lastBlock = 0;
-		int nextBlockSize = size;
-		memcpy(nextBlocks, next, size * sizeof(int));
+		
+		TetrisEventData::GameEnd data;
+		data.tetris = this;
+  		eventManager.PushEvent(EventType::GAME_END, &data);
 	}
 
 	void Tetris::DropBlock()
 	{
+		if (gameEnd)
+			return;
+
 		while (true)
 		{
-			if (!(CanSetBlock(blockType, rotation, holdX + 1, holdY)))
+			if (!(CanSetBlock(blockType, blockRotation, blockX, blockY + 1)))
 				break;
-			holdX++;
+			blockY++;
 		}
-		SetBlock(blockType, rotation, holdX, holdY);
+
+		TetrisEventData::BlockDrop data;
+		data.tetris = this;
+		data.rotate = blockRotation;
+		data.blockType = blockType;
+		data.resultX = blockX;
+		data.resultY = blockY;
+		eventManager.PushEvent(EventType::BLOCK_DOWN, &data);
+
+		SetBlock(blockType, blockRotation, blockX, blockY);
 		NextBlock();
 		return;
 	}
 
-	void OnChangeBlock()
+	void Tetris::OnChangeBlock()
 	{
+		MoveToDefaultHold();
+		remainTime = 0;
 
+		TetrisEventData::NewBlockStart data;
+		data.tetris = this;
+		data.blockType = blockType;
+		eventManager.PushEvent(EventType::NEW_BLOCK_START, &data);
+
+		if (!(CanSetBlock(blockType, blockRotation, blockX, blockY)))
+			GameEnd();
 	}
 
 	bool Tetris::IsInvalidX(int x)
 	{
-		return x < 0 || x > boardWidth;
+		return x < 0 || x >= boardWidth;
 	}
 	bool Tetris::IsInvalidY(int y)
 	{
-		return y < 0 || y > boardHeight;
+		return y < 0 || y >= boardHeight;
+	}
+
+	int Tetris::LineClear()
+	{
+		TetrisEventData::LineCleared data;
+		data.tetris = this;
+
+		int cleared = 0;
+		for (int y = boardHeight - 1; y >= 0; y--)
+		{
+			for (int x = 0; x < boardWidth; x++)
+			{
+				if (board[y][x] == 0)
+					goto NEXTLINE;
+			}
+			data.lineIndex = y - cleared;
+			eventManager.PushEvent(EventType::LINE_CLEARED, &data);
+
+			cleared++;
+
+			for (int i = y; i > 0; i--)
+			{
+				for (int j = 0; j < boardWidth; j++)
+				{
+					board[i][j] = board[i - 1][j];
+				}
+			}
+			for (int j = 0; j < boardWidth; j++)
+				board[0][j] = 0;
+
+			NEXTLINE:
+			continue;
+		}
+
+		clearedLine += cleared;
+
+		return cleared;
 	}
 
 	void Tetris::MoveBlockLeft()
 	{
-		if (CanSetBlock(blockType, rotation, holdX, holdY - 1))
+		if (gameEnd)
+			return;
+
+		if (CanSetBlock(blockType, blockRotation, blockX - 1, blockY))
 		{
-			holdY--;
+			blockX--;
+
+			TetrisEventData::BlockMove data;
+			data.tetris = this;
+			data.beforeX = blockX + 1;
+			data.beforeY = blockY;
+			data.resultX = blockX;
+			data.resultY = blockY;
+			eventManager.PushEvent(EventType::BLOCK_MOVE, &data);
 		}
+	}
+
+	void SudoEnd()
+	{
+
 	}
 
 	void Tetris::MoveBlockRight()
 	{
-		if (CanSetBlock(blockType, rotation, holdX, holdY + 1))
+		if (gameEnd)
+			return;
+
+		if (CanSetBlock(blockType, blockRotation, blockX + 1, blockY))
 		{
-			holdY++;
+			blockX++;
+
+			TetrisEventData::BlockMove data;
+			data.tetris = this;
+			data.beforeX = blockX + 1;
+			data.beforeY = blockY;
+			data.resultX = blockX;
+			data.resultY = blockY;
+			eventManager.PushEvent(EventType::BLOCK_MOVE, &data);
 		}
 	}
 
 	void Tetris::Down()
 	{
-		if (CanSetBlock(blockType, rotation, holdX + 1, holdY))
+		if (gameEnd)
+			return;
+
+		if (CanSetBlock(blockType, blockRotation, blockX, blockY + 1))
 		{
-			holdX++;
+			blockY++;
+
+			TetrisEventData::BlockDown data;
+			data.tetris = this;
+			data.resultX = blockX;
+			data.resultY = blockY;
+			eventManager.PushEvent(EventType::BLOCK_DOWN, &data);
 		}
 		else
 		{
-			SetBlock(blockType, rotation, holdX, holdY);
+			SetBlock(blockType, blockRotation, blockX, blockY);
+			NextBlock();
 		}
 	}
 
 	void Tetris::RotateRight()
 	{
-		int temp = rotation + 1;
+		if (gameEnd)
+			return;
+
+		int temp = blockRotation + 1;
 		if (temp > 3)
 			temp = 0;
 		temp &= 0b11;
-		if (!(CanSetBlock(blockType, temp, holdX, holdY)))
+		if (!(CanSetBlock(blockType, temp, blockX, blockY)))
 			return;
-		rotation = temp;
+		blockRotation = temp;
+
+		TetrisEventData::BlockRotateLeft data;
+		data.tetris = this;
+		data.resultRotate = blockRotation;
+		eventManager.PushEvent(EventType::BLOCK_ROTATE_RIGHT, &data);
 	}
 
 	void Tetris::RotateLeft()
 	{
-		int temp = rotation - 1;
+		if (gameEnd)
+			return;
+
+		int temp = blockRotation - 1;
 		if (temp < 0)
 			temp = 3;
 		temp = IndexToInRange(temp);
 		temp &= 0b11;
-		if (!(CanSetBlock(blockType, temp, holdX, holdY)))
+		if (!(CanSetBlock(blockType, temp, blockX, blockY)))
 			return;
-		rotation = temp;
+		blockRotation = temp;
+
+		TetrisEventData::BlockRotateLeft data;
+		data.tetris = this;
+		data.resultRotate = blockRotation;
+		eventManager.PushEvent(EventType::BLOCK_ROTATE_LEFT, &data);
 	}
 
-	void Tetris::SetBlock(int block, int rotation, int x, int y)
+	void Tetris::SudoEnd()
+	{
+		GameEnd();
+	}
+
+	void Tetris::SetBlock(int block, int blockRotation, int x, int y)
 	{
 		int i, toX, toY;
 		for (i = 0; i < 4; i++)
 		{
-			toX = x + NumsToBlock[block][rotation][i][0];
-			toY = y + NumsToBlock[block][rotation][i][1];
-			board[toX][toY] = true;
+			toX = x + NumsToBlock[block][blockRotation][i][0];
+			toY = y + NumsToBlock[block][blockRotation][i][1];
+			board[toY][toX] = block;
 		}
+
+		TetrisSpace::TetrisEventData::SetBlock data;
+		data.tetris = this;
+		data.blockType = block;
+		data.rotate = blockRotation;
+		data.resultX = x;
+		data.resultY = y;
+		eventManager.PushEvent(EventType::SET_BLOCK, &data);
+
+		LineClear();
 	}
 
-	bool Tetris::CanSetBlock(int block, int rotation, int x, int y)
+	bool Tetris::CanSetBlock(int block, int blockRotation, int x, int y)
 	{
 		int i, toX, toY;
 		for (i = 0; i < 4; i++)
 		{
-			toX = x + NumsToBlock[block][rotation][i][0];
-			toY = y + NumsToBlock[block][rotation][i][1];
+			toX = x + NumsToBlock[block][blockRotation][i][0];
+			toY = y + NumsToBlock[block][blockRotation][i][1];
 			if (IsInvalidX(toX) || IsInvalidY(toY))
+				return false;
+			if (board[toY][toX] != 0)
 				return false;
 		}
 		return true;
