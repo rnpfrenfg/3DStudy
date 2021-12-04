@@ -14,6 +14,7 @@
 #include "GPUQueue.h"
 #include "GameRenderer.h"
 #include "FrameResource.h"
+#include "GameObject.h"
 
 #include <fstream>
 
@@ -149,6 +150,6 @@ private:
 
 	POINT mouseDown;
 
-	RenderItem skullObject;//Temp test
+	GameObject skullObject;//Temp test
 	float cameraHeight = 30;
 };

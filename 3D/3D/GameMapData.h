@@ -2,9 +2,9 @@
 
 #include "include.h"
 
-#include "RenderItem.h"
+#include "GameObject.h"
 
 struct GameMapData
 {
-	std::vector<RenderItem> objs;
+	GameObjectList objs;
 };

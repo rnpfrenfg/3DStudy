@@ -4,12 +4,25 @@
 
 #include "Light.h"
 
+struct InstanceData
+{
+	DX::XMMATRIX World = DX::XMMatrixIdentity();
+	DX::XMMATRIX TexTransform = DX::XMMatrixIdentity();
+	UINT MaterialIndex;
+	UINT InstancePad0;
+	UINT InstancePad1;
+	UINT InstancePad2;
+};
+
+/*
+
 struct ObjectConstants
 {
 	DX::XMMATRIX world;
 	DX::XMMATRIX TexTransform = DX::XMMatrixIdentity();
 };
 
+*/
 struct MaterialConstants
 {
 	DX::XMFLOAT4 DiffuseAlbedo = { 1.0f,1.0f,1.0f,1.0f };
@@ -45,12 +58,13 @@ struct FrameConstants
 
 	Light Lights[MaxLights];
 };
+
 class FrameResource
 {
 public:
 	enum {FrameResources = 5};
 
-	UploadBuffer<ObjectConstants> ObjectDataBuffer;
+	UploadBuffer<InstanceData> ObjectDataBuffer;
 	UploadBuffer<MaterialConstants> MaterialBuffer;
 	UploadBuffer<FrameConstants> mFrameCB;
 	FrameConstants frameResource;

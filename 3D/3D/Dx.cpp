@@ -90,29 +90,6 @@ LRESULT Dx::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_LBUTTONUP:
 
 	{
-		WORD newX = LOWORD(lParam);
-		WORD newY = HIWORD(lParam);
-		
-		float middleX = x;
-		float middleZ = z;
-
-		float vx = (2.0f * newX / (float)graphicSetting.width - 1.0f) / mMainCamera.mProj.r[0].m128_f32[0];
-		float vy = (-2.0f * newY / (float)graphicSetting.height + 1.0f) / mMainCamera.mProj.r[1].m128_f32[1];
-
-		float left = x + vx * cameraHeight;
-		float right = z + vy * cameraHeight;
-
-		std::cout <<'\n'<< middleX<<'\n';
-		std::cout << middleZ << '\n';
-		std::cout << vx*30 << '\n';
-		std::cout << vy * 30 << '\n';
-		std::cout << left << '\n';
-		std::cout << right << '\n';
-
-		skullObject.x = left;
-		skullObject.z = right;
-		skullObject.y = 0;
-		mapRenderer.AddRenderObject(skullObject);
 	}
 
 		return 0;
@@ -254,6 +231,14 @@ bool Dx::InitMainWindow()
 
 void Dx::InitDirectX()
 {
+#if CDEBUG
+	// Enable the D3D12 debug layer.
+	{
+		ComPtr<ID3D12Debug> debugController;
+		DxThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)));
+		debugController->EnableDebugLayer();
+	}
+#endif
 	DxThrowIfFailed(CreateDXGIFactory(IID_PPV_ARGS(&mFactory)));
 
 	CCreateDevice();
@@ -412,13 +397,20 @@ void Dx::LoadModels()
 	delete[] vertexList;
 	fin.close();
 
-	for (int i = 0; i < 3; i++)
+	RenderItem* skullR = new RenderItem;
+	skullR->mesh = &skullMesh;
+	mapRenderer.AddRenderItem(skullR);
+
+	skullObject.item = skullR;
+	for (int i = 0; i < 5; i++)
 	{
-		skullObject.x = skullObject.z = 10 * i;
-		skullObject.y = 0;
-		skullObject.scale = 0.5;
-		skullObject.mesh = &skullMesh;
-		mapRenderer.AddRenderObject(skullObject);
+		auto& position = skullObject.transform.position;
+
+		skullObject.transform.scale = 0.5;
+		position.x = position.z = 10 * i;
+		position.y = 0;
+
+		mapRenderer.AddGameObject(skullObject);
 	}
 
 	Vertex tempV[4];
@@ -437,14 +429,22 @@ void Dx::LoadModels()
 
 	UINT32 tempI[6] = { 0,1,2, 0, 2, 3 };
 
-	RenderItem temp;
-	temp.mesh = new Mesh;
-	temp.mesh->Init(mDevice, &testTex, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, tempV, _countof(tempV), tempI, 6);
-	temp.x = 5;
-	temp.y = temp.z = 0;
-	temp.scale = 4;
-	mapRenderer.AddRenderObject(temp);
+	{
+		RenderItem* tempR = new RenderItem;
+		tempR->mesh = new Mesh;
+		tempR->mesh->Init(mDevice, &testTex, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, tempV, _countof(tempV), tempI, 6);
+		mapRenderer.AddRenderItem(tempR);
 
+		GameObject temp;
+		auto& tempP = temp.transform.position;
+		tempP.x = 5;
+		tempP.y = tempP.z = 0;
+		temp.transform.scale = 4;
+		temp.item = tempR;
+		mapRenderer.AddGameObject(temp);
+	}
+
+	//Tiles
 	{
 		Vertex tempV[4];
 
@@ -460,28 +460,46 @@ void Dx::LoadModels()
 		tempV[3].position.x = 1;
 		tempV[3].TexC = { 1,1 };
 
-		RenderItem temp;
-		temp.mesh = new Mesh;
-		temp.mesh->Init(mDevice, &testTex, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, tempV, _countof(tempV), tempI, 6);
-		const float tttttt = 50;
+		RenderItem* temp = new RenderItem;
+		temp->mesh = new Mesh;
+		temp->mesh->Init(mDevice, &testTex, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, tempV, _countof(tempV), tempI, 6);
+		mapRenderer.AddRenderItem(temp);
+
+		const float tttttt = 100;
 		float div = 3;
-		temp.scale = div;
+		
+		int count = 0;
+		GameObject obj;
+		obj.item = temp;
+		auto& position = obj.transform.position;
+		obj.transform.scale = div;
+
 		for (float i = -tttttt; i < tttttt; i+= div)
 			for (float j = -tttttt; j < tttttt; j+= div)
 			{
-				temp.x = i;
-				temp.z = j;
-				mapRenderer.AddConstRenderObject(temp);
+				position.x = i;
+				position.y = 0;
+				position.z = j;
+				mapRenderer.AddGameObject(obj);
+				count++;
 			}
+		std::cout << '\n' << count << '\n';
 	}
 
-	temp.mesh = new Mesh;
-	temp.mesh->Init(mDevice, &texWirefence, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, tempV, _countof(tempV), tempI, 6);
-	temp.x = 7;
-	temp.scale = 7;
-	mapRenderer.AddRenderObject(temp);
+	{
+		RenderItem* tempR = new RenderItem;
+		tempR->mesh = new Mesh;
+		tempR->mesh->Init(mDevice, &texWirefence, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, tempV, _countof(tempV), tempI, 6);
+		mapRenderer.AddRenderItem(tempR);
 
-	DxThrowIfFailed(mapRenderer.EndAddConstRenderObject());
+		GameObject temp;
+		temp.item = tempR;
+		auto& tempP = temp.transform.position;
+		tempP.x = 7;
+		tempP.y = tempP.z = 30;
+		temp.transform.scale = 7;
+		mapRenderer.AddGameObject(temp);
+	}
 
 	cout << "END\n";
 }

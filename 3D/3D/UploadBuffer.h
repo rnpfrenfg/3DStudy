@@ -9,6 +9,8 @@ public:
 	UploadBuffer() = default;
 	~UploadBuffer()
 	{
+		std::cout << "UnMAPPED";
+		DxThrowIfFailed(-1);
 		if (mMappedData != nullptr)
 		{
 			mBuffer->Unmap(0, nullptr);
@@ -69,6 +71,13 @@ public:
 	void CopyToBuffer(int index, void* ptr)
 	{
 		memcpy(&mMappedData[index * mElementSize], ptr, sizeof(T));
+	}
+
+	D3D12_GPU_VIRTUAL_ADDRESS GetPtr(UINT index)
+	{
+		D3D12_GPU_VIRTUAL_ADDRESS handle = mBuffer->GetGPUVirtualAddress();
+		handle += index * ElementSize();
+		return handle;
 	}
 
 	ComPtr<ID3D12Resource> mBuffer;

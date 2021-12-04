@@ -132,6 +132,9 @@
     <ClInclude Include="FbxLoader.h">
       <Filter>Header File</Filter>
     </ClInclude>
+    <ClInclude Include="GameObject.h">
+      <Filter>Header File</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -180,6 +183,9 @@
       <Filter>Source File\GameSystem</Filter>
     </ClCompile>
     <ClCompile Include="FbxLoader.cpp">
+      <Filter>Source File</Filter>
+    </ClCompile>
+    <ClCompile Include="GameObject.cpp">
       <Filter>Source File</Filter>
     </ClCompile>
   </ItemGroup>

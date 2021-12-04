@@ -34,7 +34,7 @@ HRESULT GameRenderer::Init(GraphicSetting& setting, ComPtr<ID3D12Device>& device
 	for (int i = 0; i < FrameResource::FrameResources; i++)
 	{
 		mFrameResources[i].mFrameCB.Init(device.Get(), 2, true);
-		mFrameResources[i].ObjectDataBuffer.Init(device.Get(), 100000, true);
+		mFrameResources[i].ObjectDataBuffer.Init(device.Get(), 100000, false);
 		mFrameResources[i].MaterialBuffer.Init(device.Get(), 2, true);
 
 		mFrameResources[i].MaterialBuffer.CopyToBuffer(0, &tetst);
@@ -96,9 +96,7 @@ void GameRenderer::Update(const GameTimer& gt, GPUQueue& queue)
 	mAnimTimePos += gt.DeltaTime();
 	if (mAnimTimePos >= mSkullAnimation.GetEndTime())
 		mAnimTimePos = 0.0f;
-	mSkullAnimation.Interpolate(mAnimTimePos, mapData.objs[0]._world);
-	mapData.objs[0].dirty = FrameResource::FrameResources;
-	//TODO
+
 	currFrameResourceIndex = (currFrameResourceIndex + 1) % FrameResource::FrameResources;
 	mCurrFrameResource = &mFrameResources[currFrameResourceIndex];
 
@@ -107,17 +105,15 @@ void GameRenderer::Update(const GameTimer& gt, GPUQueue& queue)
 	UpdateFrameResource(gt);
 
 	{
-		mAnimTimePos += gt.DeltaTime();
+		/*TODO Animation
+				mAnimTimePos += gt.DeltaTime();
 		if (mAnimTimePos >= mSkullAnimation.GetEndTime())
 			mAnimTimePos = 0.0f;
 		mSkullAnimation.Interpolate(mAnimTimePos, mapData.objs[0]._world);
-		// TODO mapData.objs[0].dirty = FrameResource::FrameResources;
+		*/
 	}
 
-	auto& objCB = mCurrFrameResource->ObjectDataBuffer;
-
-	for (RenderItem& item : mapData.objs)
-		UpdateMatrix(item, objCB);
+	UpdateGameObjectsMatrix(mapData.objs.list);
 }
 
 void GameRenderer::Draw(ComPtr<ID3D12GraphicsCommandList> cmdList, GPUQueue& queue)
@@ -125,20 +121,40 @@ void GameRenderer::Draw(ComPtr<ID3D12GraphicsCommandList> cmdList, GPUQueue& que
 	auto& frameCB = mCurrFrameResource->mFrameCB;
 	auto& materialCB = mCurrFrameResource->MaterialBuffer;
 
+	cmdList->SetPipelineState(mPSO.Get());
 	cmdList->SetGraphicsRootSignature(mRootSignature.Get());
 
+	auto& descriptorHeap = CTextureManager::GetInstance()->mSrvDescriptorHeap;
+	ID3D12DescriptorHeap* descriptorHeaps[] = { descriptorHeap.Get() };
+	cmdList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+
+	cmdList->SetGraphicsRootShaderResourceView(1, materialCB.mBuffer->GetGPUVirtualAddress());
 	cmdList->SetGraphicsRootConstantBufferView(2, frameCB.mBuffer->GetGPUVirtualAddress());
-	cmdList->SetGraphicsRootConstantBufferView(3, materialCB.mBuffer->GetGPUVirtualAddress());
+	cmdList->SetGraphicsRootDescriptorTable(3, descriptorHeap->GetGPUDescriptorHandleForHeapStart());
 
-	cmdList->SetPipelineState(mPSO.Get());
-
-	DrawRenderItems(cmdList, mapData.objs, mCurrFrameResource->ObjectDataBuffer);
+	DrawRenderItems(cmdList, renderItems);
 
 	mCurrFrameResource->fence = queue.Signal();
 }
 
-void GameRenderer::DrawRenderItems(ComPtr<ID3D12GraphicsCommandList>& cmdList, std::vector<RenderItem>& renderItems, UploadBuffer<ObjectConstants> objCB)
+void GameRenderer::DrawRenderItems(ComPtr<ID3D12GraphicsCommandList>& cmdList, std::vector<RenderItem*>& renderItems)
 {
+	cmdList->SetGraphicsRootShaderResourceView(0, mCurrFrameResource->ObjectDataBuffer.mBuffer->GetGPUVirtualAddress());
+
+	for (size_t i = 0; i < renderItems.size(); ++i)
+	{
+		auto& renderItem = renderItems[i];
+		auto& mesh = renderItem->mesh;
+
+		cmdList->IASetPrimitiveTopology(mesh->topology);
+		cmdList->IASetIndexBuffer(&mesh->mIndexBufferView);
+		cmdList->IASetVertexBuffers(0, 1, &mesh->mVertexBufferView);
+
+		cmdList->DrawIndexedInstanced(mesh->indexes, renderItem->Instances.size(), 0, 0, renderItem->gpuIndex);
+	}
+
+	/*
+	
 	cmdList->SetDescriptorHeaps(1, CTextureManager::GetInstance()->mSrvDescriptorHeap.GetAddressOf());
 	for (UINT i = 0; i < renderItems.size(); i++)
 	{
@@ -158,39 +174,24 @@ void GameRenderer::DrawRenderItems(ComPtr<ID3D12GraphicsCommandList>& cmdList, s
 		cmdList->IASetVertexBuffers(0, 1, &mesh->mVertexBufferView);
 		cmdList->DrawIndexedInstanced(mesh->indexes, 1, 0, 0, 0);
 	}
+	*/
 }
 
-void GameRenderer::AddRenderObject(RenderItem& item)
+void GameRenderer::AddRenderItem(RenderItem* item)
 {
-	item._index = newObjIndex;
-	item.dirty = FrameResource::FrameResources;
-	mapData.objs.push_back(item);
-	newObjIndex++;
+	renderItems.push_back(item);
+}
+
+void GameRenderer::AddGameObject(GameObject& item)
+{
+	mapData.objs.Add(item);
 }
 
 void GameRenderer::AddConstRenderObject(RenderItem& item)
 {
+	DxThrowIfFailed(-1);
 	//TODO
-	AddRenderObject(item);
 	return;	
-}
-
-HRESULT GameRenderer::EndAddConstRenderObject()
-{
-	return S_OK;
-	/* todo
-		HRESULT hr = defaultMapItemBundle.Init(mDevice, mPSO);
-
-	auto& cmdList = defaultMapItemBundle.mCommandList;
-	cmdList->SetPipelineState(mPSO.Get());
-
-	
-	cmdList->SetGraphicsRootSignature(mRootSignature.Get());
-	DrawRenderItems(defaultMapItemBundle.mCommandList, mapData.constObjs, ConstObjDataBuffer);
-	hr |= cmdList->Close();
-
-	return hr;
-	*/
 }
 
 void GameRenderer::ChangeGraphicsSetting(GraphicSetting& setting)
@@ -212,21 +213,106 @@ void GameRenderer::ChangeGraphicsSetting(GraphicSetting& setting)
 	mContainsMirror = setting.mirror;
 }
 
-void GameRenderer::UpdateMatrix(RenderItem& item, UploadBuffer<ObjectConstants>& objectCB)
+void GameRenderer::UpdateGameObjectsMatrix(std::vector<GameObject>& list)
 {
-	if (item.dirty)
+	for (auto& item : renderItems)
+		item->Instances.clear();
+
+	int visibleInstanceCount = 0;
+	int len = list.size();
+	for (int i = 0; i<len; i++)
 	{
-		ObjectConstants objConst;
-		DX::XMMATRIX m;
+		auto& startItem = list[i];
+		if (startItem.item == nullptr)//no render
+			continue;
 
-		m = item._world * DX::XMMatrixScaling(item.scale, item.scale, item.scale) * DX::XMMatrixTranslation(item.x, item.y, item.z);
-		m = DX::XMMatrixTranspose(m);
+		RenderItem* renderItem = startItem.item;
 
-		objConst.world = m;
-		objConst.TexTransform = DX::XMMatrixTranspose(objConst.TexTransform);
-		objectCB.CopyToBuffer(item._index, &objConst);
-		item.dirty--;
+		InstanceData data;
+
+		renderItem->gpuIndex = visibleInstanceCount;
+
+		auto same = i;
+		for (; same < len; same++)
+		{
+			auto& item = list[same];
+			if (item.item != startItem.item)
+				break;
+
+			auto& transform = item.transform;
+			auto& position = transform.position;
+
+			DX::XMMATRIX m;
+
+			m = DX::XMMatrixScaling(transform.scale, transform.scale, transform.scale) * DX::XMMatrixTranslation(position.x, position.y, position.z);
+			m = DX::XMMatrixTranspose(m);
+
+			data.TexTransform = DX::XMMatrixTranspose(DX::XMMatrixIdentity());//TODO
+			data.MaterialIndex = 0;//TODO  instanceData[i].MaterialIndex;
+			data.World = m;
+
+			//XMStoreFloat4x4(&skullRitem->Instances[index].TexTransform, XMMatrixScaling(2.0f, 2.0f, 1.0f));
+
+			//TODO : Check object is in Camera..// AABB
+
+			mCurrFrameResource->ObjectDataBuffer.CopyToBuffer(visibleInstanceCount, &data);
+			renderItem->Instances.push_back(data);
+
+			visibleInstanceCount++;
+		}
+		
+		if (same == len)
+			break;
+
+		i = same - 1;
 	}
+	return;
+	/*
+	
+	auto currInstanceBuffer = mCurrFrameResource->ObjectDataBuffer;
+	for (auto& e : mAllRitems)
+	{
+		const auto& instanceData = e->Instances;
+
+		int visibleInstanceCount = 0;
+
+		for (UINT i = 0; i < (UINT)instanceData.size(); ++i)
+		{
+			DX::XMMATRIX world = XMLoadFloat4x4(&instanceData[i].World);
+			DX::XMMATRIX texTransform = XMLoadFloat4x4(&instanceData[i].TexTransform);
+
+			DX::XMMATRIX invWorld = XMMatrixInverse(&XMMatrixDeterminant(world), world);
+
+			// View space to the object's local space.
+			DX::XMMATRIX viewToLocal = XMMatrixMultiply(invView, invWorld);
+
+			// Transform the camera frustum from view space to the object's local space.
+			DX::BoundingFrustum localSpaceFrustum;
+			mCamFrustum.Transform(localSpaceFrustum, viewToLocal);
+
+			// Perform the box/frustum intersection test in local space.
+			if ((localSpaceFrustum.Contains(e->Bounds) != DirectX::DISJOINT) || (mFrustumCullingEnabled == false))
+			{
+				InstanceData data;
+				XMStoreFloat4x4(&data.World, XMMatrixTranspose(world));
+				XMStoreFloat4x4(&data.TexTransform, XMMatrixTranspose(texTransform));
+				data.MaterialIndex = instanceData[i].MaterialIndex;
+
+				// Write the instance data to structured buffer for the visible objects.
+				currInstanceBuffer->CopyData(visibleInstanceCount++, data);
+			}
+		}
+
+		e->InstanceCount = visibleInstanceCount;
+
+		std::wostringstream outs;
+		outs.precision(6);
+		outs << L"Instancing and Culling Demo" <<
+			L"    " << e->InstanceCount <<
+			L" objects visible out of " << e->Instances.size();
+		mMainWndCaption = outs.str();
+	}
+	*/
 }
 
 void GameRenderer::UpdateFrameResource(const GameTimer& gt)
@@ -324,22 +410,22 @@ std::array<const D3D12_STATIC_SAMPLER_DESC, 6> GetStaticSamplers()
 
 void GameRenderer::BuildRootSignature()
 {
-	enum { slots = 4 };
-	CD3DX12_ROOT_PARAMETER slotRootParameter[slots];
-
 	D3D12_DESCRIPTOR_RANGE texTable;
 	texTable.BaseShaderRegister = 0;//Register t0
-	texTable.NumDescriptors = 4;
+	texTable.NumDescriptors = 7;
 	texTable.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	texTable.RegisterSpace = 0;
 	texTable.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-	slotRootParameter[0].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
-	slotRootParameter[1].InitAsConstantBufferView(0);
-	slotRootParameter[2].InitAsConstantBufferView(1);
-	slotRootParameter[3].InitAsConstantBufferView(2);
+	enum { slots = 4 };
+	CD3DX12_ROOT_PARAMETER slotRootParameter[slots];
+	slotRootParameter[0].InitAsShaderResourceView(0, 1);
+	slotRootParameter[1].InitAsShaderResourceView(1, 1);
+	slotRootParameter[2].InitAsConstantBufferView(0);
+	slotRootParameter[3].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	auto samplers = GetStaticSamplers();
+
 	D3D12_ROOT_SIGNATURE_DESC rootSigDesc;
 	rootSigDesc.NumParameters = slots;
 	rootSigDesc.pParameters = slotRootParameter;

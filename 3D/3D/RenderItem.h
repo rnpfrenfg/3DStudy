@@ -30,18 +30,18 @@ public:
 class RenderItem
 {
 public:
-	DX::XMMATRIX _world = DX::XMMatrixIdentity();
+	RenderItem() = default;
+	RenderItem(const RenderItem & rhs) = delete;
 
-	UINT _index;
-	UINT _instanceCounts;
-public:
-	UINT dirty = FrameResource::FrameResources;
-
+	D3D12_PRIMITIVE_TOPOLOGY PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	Mesh* mesh = nullptr;
-	CTexture* texture = nullptr;
+	//CTexture* texture = nullptr;
 
-	float x = 0;
-	float y = 0;
-	float z = 0;
-	float scale = 1;
+public:
+	DX::XMMATRIX world = DX::XMMatrixIdentity();
+
+	DX::BoundingBox Bounds;
+	std::vector<InstanceData> Instances;
+
+	int gpuIndex = 0;
 };

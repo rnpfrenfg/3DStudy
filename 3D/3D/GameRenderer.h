@@ -11,6 +11,7 @@
 #include "GPUQueue.h"
 #include "AnimationHelper.h"
 #include "CommandBundle.h"
+#include "GameObject.h"
 
 //TODO : Rename
 class GameRenderer
@@ -20,10 +21,10 @@ public:
 
 	HRESULT Init(GraphicSetting& setting, ComPtr<ID3D12Device>& device);
 
-	void AddRenderObject(RenderItem& item);
+	void AddRenderItem(RenderItem* item);
+	void AddGameObject(GameObject& item);
 
 	void AddConstRenderObject(RenderItem& item);
-	HRESULT EndAddConstRenderObject();
 
 	void ChangeGraphicsSetting(GraphicSetting& setting);
 
@@ -39,11 +40,10 @@ private:
 	void DefineSkullAnimation();
 
 	void UpdateFrameResource(const GameTimer& gt);
-	void UpdateMatrix(RenderItem& item, UploadBuffer<ObjectConstants>& objectCB);
 
-	void DrawRenderItems(ComPtr<ID3D12GraphicsCommandList>& cmdList, std::vector<RenderItem>& meshObjects, UploadBuffer<ObjectConstants> objCB);
+	void UpdateGameObjectsMatrix(std::vector<GameObject>& list);
 
-	void _AddItem(RenderItem& item, ComPtr<ID3D12PipelineState> pso, std::vector<RenderItem>& list);
+	void DrawRenderItems(ComPtr<ID3D12GraphicsCommandList>& cmdList, std::vector<RenderItem*>& renderItems);
 
 	GameMapData mapData;
 	FrameResource mFrameResources[FrameResource::FrameResources];
@@ -54,17 +54,15 @@ private:
 	ComPtr<ID3D12Device> mDevice;
 
 	ComPtr<ID3D12RootSignature> mRootSignature;
-	
 	ComPtr<ID3D12PipelineState> mPSO = nullptr;
-
 	ComPtr<ID3D12PipelineState> mPsoCompute;
 
 	static D3D12_GPU_DESCRIPTOR_HANDLE lastTexHandle;
 
+	std::vector<RenderItem*> renderItems;
+
 	bool mContainsMirror = false;
 	bool mShadow = false;
-
-	UINT newObjIndex;
 
 	float mAnimTimePos = 0;
 	BoneAnimation mSkullAnimation;

@@ -153,6 +153,7 @@
     <ClInclude Include="FbxLoader.h" />
     <ClInclude Include="FMemoryPool.hpp" />
     <ClInclude Include="FrameResource.h" />
+    <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameRenderer.h" />
     <ClInclude Include="GameMapData.h" />
     <ClInclude Include="GPUQueue.h" />
@@ -179,6 +180,7 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="FbxLoader.cpp" />
     <ClCompile Include="FrameResource.cpp" />
+    <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GameRenderer.cpp" />
     <ClCompile Include="GPUQueue.cpp" />
     <ClCompile Include="RenderItem.cpp" />

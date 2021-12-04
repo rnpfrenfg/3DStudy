@@ -28,6 +28,8 @@ inline void Test()
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int cmdShow)
 {
+	CCreateConsole();
+
 	if (!DX::XMVerifyCPUSupport())
 	{
 		MessageBox(NULL, L"XMVerifyCPUSupport", TEXT("Notice"), MB_OK);
