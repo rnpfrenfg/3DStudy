@@ -85,6 +85,9 @@ LRESULT Dx::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	}
 	case WM_MBUTTONDOWN:
 	case WM_RBUTTONDOWN:
+	{
+		std::cout << mMainCamera.mPos.m128_f32[0]<<' '<< mMainCamera.mPos.m128_f32[1]<<' '<< mMainCamera.mPos.m128_f32[2]<<'\n';
+	}
 		//OnMouseDown(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 		return 0;
 	case WM_LBUTTONUP:

@@ -41,7 +41,7 @@ public:
 	DX::XMMATRIX world = DX::XMMatrixIdentity();
 
 	DX::BoundingBox Bounds;
-	std::vector<InstanceData> Instances;
 
 	int gpuIndex = 0;
+	int instances = 0;
 };

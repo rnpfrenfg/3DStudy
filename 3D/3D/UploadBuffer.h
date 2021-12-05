@@ -21,7 +21,7 @@ public:
 	{
 		mElementSize = sizeof(T);
 
-		if (isConstant == true)
+		if (isConstant)
 		{
 			mElementSize = CalcConstantBufferByteSize(mElementSize);
 		}
@@ -75,9 +75,7 @@ public:
 
 	D3D12_GPU_VIRTUAL_ADDRESS GetPtr(UINT index)
 	{
-		D3D12_GPU_VIRTUAL_ADDRESS handle = mBuffer->GetGPUVirtualAddress();
-		handle += index * ElementSize();
-		return handle;
+		return mBuffer->GetGPUVirtualAddress() + index * mElementSize;
 	}
 
 	ComPtr<ID3D12Resource> mBuffer;
@@ -111,7 +109,7 @@ public:
 	{
 		mElementSize = elementSize;
 
-		if (isConstant == true)
+		if (isConstant)
 		{
 			mElementSize = CalcConstantBufferByteSize(mElementSize);
 		}

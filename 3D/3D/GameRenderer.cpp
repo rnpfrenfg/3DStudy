@@ -150,7 +150,7 @@ void GameRenderer::DrawRenderItems(ComPtr<ID3D12GraphicsCommandList>& cmdList, s
 		cmdList->IASetIndexBuffer(&mesh->mIndexBufferView);
 		cmdList->IASetVertexBuffers(0, 1, &mesh->mVertexBufferView);
 
-		cmdList->DrawIndexedInstanced(mesh->indexes, renderItem->Instances.size(), 0, 0, renderItem->gpuIndex);
+		cmdList->DrawIndexedInstanced(mesh->indexes, renderItem->instances, 0, 0, renderItem->gpuIndex);
 	}
 
 	/*
@@ -216,7 +216,7 @@ void GameRenderer::ChangeGraphicsSetting(GraphicSetting& setting)
 void GameRenderer::UpdateGameObjectsMatrix(std::vector<GameObject>& list)
 {
 	for (auto& item : renderItems)
-		item->Instances.clear();
+		item->instances = 0;
 
 	int visibleInstanceCount = 0;
 	int len = list.size();
@@ -232,39 +232,34 @@ void GameRenderer::UpdateGameObjectsMatrix(std::vector<GameObject>& list)
 
 		renderItem->gpuIndex = visibleInstanceCount;
 
-		auto same = i;
-		for (; same < len; same++)
+		int startIndex = visibleInstanceCount;
+		for (; i < len; i++)
 		{
-			auto& item = list[same];
+			auto& item = list[i];
 			if (item.item != startItem.item)
+			{
+				i--;
 				break;
+			}
 
 			auto& transform = item.transform;
 			auto& position = transform.position;
 
-			DX::XMMATRIX m;
-
-			m = DX::XMMatrixScaling(transform.scale, transform.scale, transform.scale) * DX::XMMatrixTranslation(position.x, position.y, position.z);
-			m = DX::XMMatrixTranspose(m);
-
+			data.World = DX::XMMatrixScaling(transform.scale, transform.scale, transform.scale) * DX::XMMatrixTranslation(position.x, position.y, position.z);
+			data.World = DX::XMMatrixTranspose(data.World);
 			data.TexTransform = DX::XMMatrixTranspose(DX::XMMatrixIdentity());//TODO
 			data.MaterialIndex = 0;//TODO  instanceData[i].MaterialIndex;
-			data.World = m;
 
 			//XMStoreFloat4x4(&skullRitem->Instances[index].TexTransform, XMMatrixScaling(2.0f, 2.0f, 1.0f));
 
 			//TODO : Check object is in Camera..// AABB
 
 			mCurrFrameResource->ObjectDataBuffer.CopyToBuffer(visibleInstanceCount, &data);
-			renderItem->Instances.push_back(data);
 
 			visibleInstanceCount++;
 		}
 		
-		if (same == len)
-			break;
-
-		i = same - 1;
+		renderItem->instances = visibleInstanceCount - startIndex;
 	}
 	return;
 	/*
