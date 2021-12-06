@@ -37,9 +37,6 @@ private:
 	std::wstring mClassName = L"MainWnd";
 	std::wstring mMainWndCaption = L"d3d App";
 
-	WORD mouseX;
-	WORD mouseY;
-
 public:
 	Dx(HINSTANCE instance);
 	~Dx();
@@ -137,19 +134,8 @@ private:
 private:
 	GameSetting gameSetting;
 
-	float cameraX = 0;
-	float cameraY = 0;
-
-	float mPhi = DX::XM_PIDIV4;
-	float mTheta = 1.5f * DX::XM_PI;
-	float x = 0;
-	float z = 0;
-	float y = 0;
-
-	float landHigh = 0;
-
 	POINT mouseDown;
 
-	GameObject skullObject;//Temp test
+	GameObject skullObject;//test
 	float cameraHeight = 30;
 };

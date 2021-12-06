@@ -14,15 +14,6 @@ struct InstanceData
 	UINT InstancePad2;
 };
 
-/*
-
-struct ObjectConstants
-{
-	DX::XMMATRIX world;
-	DX::XMMATRIX TexTransform = DX::XMMatrixIdentity();
-};
-
-*/
 struct MaterialConstants
 {
 	DX::XMFLOAT4 DiffuseAlbedo = { 1.0f,1.0f,1.0f,1.0f };
@@ -62,7 +53,7 @@ struct FrameConstants
 class FrameResource
 {
 public:
-	enum {FrameResources = 5};
+	enum {FrameResources = 2};
 
 	UploadBuffer<InstanceData> ObjectDataBuffer;
 	UploadBuffer<MaterialConstants> MaterialBuffer;

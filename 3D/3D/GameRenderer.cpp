@@ -34,8 +34,8 @@ HRESULT GameRenderer::Init(GraphicSetting& setting, ComPtr<ID3D12Device>& device
 	for (int i = 0; i < FrameResource::FrameResources; i++)
 	{
 		mFrameResources[i].mFrameCB.Init(device.Get(), 2, true);
-		mFrameResources[i].ObjectDataBuffer.Init(device.Get(), 100000, false);
-		mFrameResources[i].MaterialBuffer.Init(device.Get(), 2, true);
+		mFrameResources[i].ObjectDataBuffer.Init(device.Get(), 300000, false);
+		mFrameResources[i].MaterialBuffer.Init(device.Get(), 2, false);
 
 		mFrameResources[i].MaterialBuffer.CopyToBuffer(0, &tetst);
 		mFrameResources[i].MaterialBuffer.CopyToBuffer(1, &shadow);
@@ -90,9 +90,37 @@ void GameRenderer::DefineSkullAnimation()
 	XMStoreFloat4(&mSkullAnimation.Keyframes[4].RotationQuat, q0);
 }
 
+void GameRenderer::OnKeyboardInput(const GameTimer& gt)
+{
+	const float dt = gt.DeltaTime();
+
+	if (GetAsyncKeyState('W') & 0x8000)
+		mMainCamera.Walk(20.0f * dt);
+
+	if (GetAsyncKeyState('S') & 0x8000)
+		mMainCamera.Walk(-20.0f * dt);
+
+	if (GetAsyncKeyState('A') & 0x8000)
+		mMainCamera.Strafe(-20.0f * dt);
+
+	if (GetAsyncKeyState('D') & 0x8000)
+		mMainCamera.Strafe(20.0f * dt);
+
+
+	/*
+	
+	if (GetAsyncKeyState('1') & 0x8000)
+		mFrustumCullingEnabled = true;
+
+	if (GetAsyncKeyState('2') & 0x8000)
+		mFrustumCullingEnabled = false;
+	*/
+}
 
 void GameRenderer::Update(const GameTimer& gt, GPUQueue& queue)
 {
+	OnKeyboardInput(gt);
+
 	mAnimTimePos += gt.DeltaTime();
 	if (mAnimTimePos >= mSkullAnimation.GetEndTime())
 		mAnimTimePos = 0.0f;
@@ -101,6 +129,9 @@ void GameRenderer::Update(const GameTimer& gt, GPUQueue& queue)
 	mCurrFrameResource = &mFrameResources[currFrameResourceIndex];
 
 	queue.WaitUntil(mCurrFrameResource->fence);
+
+
+	mMainCamera.SetProj(graphicsSet.width, graphicsSet.height);
 
 	UpdateFrameResource(gt);
 
@@ -127,10 +158,10 @@ void GameRenderer::Draw(ComPtr<ID3D12GraphicsCommandList> cmdList, GPUQueue& que
 	auto& descriptorHeap = CTextureManager::GetInstance()->mSrvDescriptorHeap;
 	ID3D12DescriptorHeap* descriptorHeaps[] = { descriptorHeap.Get() };
 	cmdList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+	cmdList->SetGraphicsRootDescriptorTable(3, descriptorHeap->GetGPUDescriptorHandleForHeapStart());
 
 	cmdList->SetGraphicsRootShaderResourceView(1, materialCB.mBuffer->GetGPUVirtualAddress());
 	cmdList->SetGraphicsRootConstantBufferView(2, frameCB.mBuffer->GetGPUVirtualAddress());
-	cmdList->SetGraphicsRootDescriptorTable(3, descriptorHeap->GetGPUDescriptorHandleForHeapStart());
 
 	DrawRenderItems(cmdList, renderItems);
 
@@ -139,42 +170,19 @@ void GameRenderer::Draw(ComPtr<ID3D12GraphicsCommandList> cmdList, GPUQueue& que
 
 void GameRenderer::DrawRenderItems(ComPtr<ID3D12GraphicsCommandList>& cmdList, std::vector<RenderItem*>& renderItems)
 {
-	cmdList->SetGraphicsRootShaderResourceView(0, mCurrFrameResource->ObjectDataBuffer.mBuffer->GetGPUVirtualAddress());
-
 	for (size_t i = 0; i < renderItems.size(); ++i)
 	{
-		auto& renderItem = renderItems[i];
+		auto renderItem = renderItems[i];
 		auto& mesh = renderItem->mesh;
 
-		cmdList->IASetPrimitiveTopology(mesh->topology);
-		cmdList->IASetIndexBuffer(&mesh->mIndexBufferView);
+		cmdList->SetGraphicsRootShaderResourceView(0, mCurrFrameResource->ObjectDataBuffer.mBuffer->GetGPUVirtualAddress() + renderItem->gpuIndex * mCurrFrameResource->ObjectDataBuffer.ElementSize());
+
 		cmdList->IASetVertexBuffers(0, 1, &mesh->mVertexBufferView);
-
-		cmdList->DrawIndexedInstanced(mesh->indexes, renderItem->instances, 0, 0, renderItem->gpuIndex);
-	}
-
-	/*
-	
-	cmdList->SetDescriptorHeaps(1, CTextureManager::GetInstance()->mSrvDescriptorHeap.GetAddressOf());
-	for (UINT i = 0; i < renderItems.size(); i++)
-	{
-		auto& renderItem = renderItems[i];
-
-		D3D12_GPU_DESCRIPTOR_HANDLE texHandle = renderItem.mesh->mTex->_handle;
-		if (lastTexHandle.ptr != texHandle.ptr)
-		{
-			cmdList->SetGraphicsRootDescriptorTable(0, texHandle);
-			lastTexHandle = texHandle;
-		}
-
-		cmdList->SetGraphicsRootConstantBufferView(1, objCB.mBuffer->GetGPUVirtualAddress() + objCB.ElementSize() * renderItem._index);
-		auto& mesh = renderItem.mesh;
-		cmdList->IASetPrimitiveTopology(mesh->topology);
 		cmdList->IASetIndexBuffer(&mesh->mIndexBufferView);
-		cmdList->IASetVertexBuffers(0, 1, &mesh->mVertexBufferView);
-		cmdList->DrawIndexedInstanced(mesh->indexes, 1, 0, 0, 0);
+		cmdList->IASetPrimitiveTopology(mesh->topology);
+
+		cmdList->DrawIndexedInstanced(mesh->indexes, renderItem->instances, 0, 0, 0);
 	}
-	*/
 }
 
 void GameRenderer::AddRenderItem(RenderItem* item)
@@ -334,7 +342,7 @@ void GameRenderer::UpdateFrameResource(const GameTimer& gt)
 	frameResource.ViewProj = DX::XMMatrixTranspose(viewProj);
 	frameResource.InvViewProj = DX::XMMatrixTranspose(invViewProj);
 
-	DX::XMStoreFloat3(&frameResource.EyePosW, mMainCamera.target);
+	DX::XMStoreFloat3(&frameResource.EyePosW, mMainCamera.mPos);
 	frameResource.NearZ = mMainCamera.mNearZ;
 	frameResource.FarZ = mMainCamera.mFarZ;
 	frameResource.TotalTime = gt.TotalTime();
@@ -438,7 +446,7 @@ void GameRenderer::BuildRootSignature()
 void GameRenderer::BuildPSO()
 {
 #if CDEBUG
-	UINT compileFlags = 0;
+	UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 #else
 	UINT compileFlags = 0;
 #endif

@@ -84,66 +84,34 @@ LRESULT Dx::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		return 0;
 	}
 	case WM_MBUTTONDOWN:
+		return 0;
 	case WM_RBUTTONDOWN:
 	{
 		std::cout << mMainCamera.mPos.m128_f32[0]<<' '<< mMainCamera.mPos.m128_f32[1]<<' '<< mMainCamera.mPos.m128_f32[2]<<'\n';
 	}
-		//OnMouseDown(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 		return 0;
 	case WM_LBUTTONUP:
-
-	{
-	}
-
-		return 0;
 	case WM_MBUTTONUP:
 	case WM_RBUTTONUP:
-		//OnMouseUp(wParam........);
 		return 0;
 	case WM_MOUSEMOVE:
-		//OnMouseMove(wParam, ........);
 	{
 		WORD newX = LOWORD(lParam);
 		WORD newY = HIWORD(lParam);
-
-		if (wParam & MK_LBUTTON)
+		if ((wParam & MK_LBUTTON) != 0)
 		{
-			float dx = -DX::XMConvertToRadians(0.25f * static_cast<float>(newX - mouseX));
-			float dy = DX::XMConvertToRadians(0.25f * static_cast<float>(newY - mouseY));
+			// Make each pixel correspond to a quarter of a degree.
+			float dx = DX::XMConvertToRadians(0.25f * static_cast<float>(newX - mouseDown.x));
+			float dy = DX::XMConvertToRadians(0.25f * static_cast<float>(newY - mouseDown.y));
 
-			mMainCamera.Pitch(dy);
-			mMainCamera.RotateY(dx);
+			mapRenderer.mMainCamera.Pitch(dy);
+			mapRenderer.mMainCamera.RotateY(dx);
 		}
 
-		mouseX = newX;
-		mouseY = newY;
+		mouseDown.x = newX;
+		mouseDown.y = newY;
 	}
 	return 0;
-	case WM_CHAR:
-	{
-		float dt = 1;
-		switch ((char)wParam)
-		{
-		case 'w':
-		case 'W':
-			mMainCamera.Walk(10.0f * dt);
-			return 0;
-		case 's':
-		case 'S':
-			mMainCamera.Walk(-10.0f * dt);
-			return 0;
-		case 'a':
-		case 'A':
-			mMainCamera.Strafe(-10.0f * dt);
-			return 0;
-		case 'd':
-		case 'D':
-			mMainCamera.Strafe(10.0f * dt);
-			return 0;
-		}
-	}
-	case WM_KEYDOWN:
-		return 0;
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		exit(0);
@@ -175,18 +143,6 @@ bool Dx::Init()
 	InitDirectX();
 
 	OnResize();
-
-	{
-		CURSORINFO cursor;
-		GetCursorInfo(&cursor);
-		mouseX = cursor.ptScreenPos.x;
-		mouseY = cursor.ptScreenPos.y;
-	}
-
-	mMainCamera.SetProj(graphicSetting.width, graphicSetting.height);
-	//mMainCamera.SetRotate(1, 0);
-	z = 5;
-
 	return true;
 }
 
@@ -280,8 +236,7 @@ void Dx::InitDirectX()
 	DxThrowIfFailed(mCommandList->Close());
 	mQueue.commandQueue->ExecuteCommandLists(1, (ID3D12CommandList* const*)mCommandList.GetAddressOf());
 	FlushCommandQueue();
-	mCommandList->SetGraphicsRootDescriptorTable(0, texManager.mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-//TODO 
+
 	LoadModels();
 }
 
@@ -504,6 +459,82 @@ void Dx::LoadModels()
 		mapRenderer.AddGameObject(temp);
 	}
 
+	{
+
+		Vertex tempV[4];
+
+		tempV[0].position.x = tempV[0].position.y = tempV[0].position.z = 0;
+		tempV[0].normal = { 0.572276, 0.816877, 0.0721907 };
+		tempV[0].TexC = { 0,1 };
+		tempV[1] = tempV[2] = tempV[3] = tempV[0];
+
+		tempV[1].position.y = 1;
+		tempV[1].TexC = { 0,0 };
+		tempV[2].position.y = tempV[2].position.x = 1;
+		tempV[2].TexC = { 1,0 };
+		tempV[3].position.x = 1;
+		tempV[3].TexC = { 1,1 };
+
+		UINT32 tempI[6] = { 0,1,2, 0, 2, 3 };
+
+		const UINT vbByteSize = (UINT)4 * sizeof(Vertex);
+
+		const UINT ibByteSize = (UINT)6 * sizeof(std::int32_t);
+
+
+		auto geo = new Mesh;
+
+		geo->Init(mDevice, nullptr, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, tempV, _countof(tempV), tempI, 6);
+
+		{
+			auto skullRitem = new RenderItem;
+			skullRitem->mesh = geo;
+
+			GameObject obj;
+			obj.item = skullR;
+
+
+			// Generate instance data.
+			const int n = 5;
+			int mInstanceCount = n * n * n;
+
+
+			float width = 200.0f;
+			float height = 200.0f;
+			float depth = 200.0f;
+
+			float x = -0.5f * width + 3;
+			float y = -0.5f * height;
+			float z = -0.5f * depth;
+			float dx = width / (n - 1);
+			float dy = height / (n - 1);
+			float dz = depth / (n - 1);
+			for (int k = 0; k < n; ++k)
+			{
+				for (int i = 0; i < n; ++i)
+				{
+					for (int j = 0; j < n; ++j)
+					{
+						int index = k * n * n + i * n + j;
+						// Position instanced along a 3D grid.
+
+						obj.transform.position.x = x + j * dx + 2;
+						obj.transform.position.y = y + i * dy;
+						obj.transform.position.z = z + k * dz;
+
+						obj.transform.scale = 1;
+
+						mapRenderer.AddGameObject(obj);
+					}
+				}
+			}
+
+			mapRenderer.AddRenderItem(skullRitem);
+		}
+
+
+	}
+
 	cout << "END\n";
 }
 
@@ -588,17 +619,15 @@ void Dx::CalculateFrameStats()
 
 void Dx::Render(const GameTimer& gt)
 {
-	mQueue.WaitUntil(mCmdAllocsFence[currFrameResourceIndex]);
 	auto& cmdListAlloc = mCommandAllocator[currFrameResourceIndex];
 
 	DxThrowIfFailed(cmdListAlloc->Reset());
 	DxThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), nullptr));
 
-	D3D12_RESOURCE_BARRIER barrier;
-
 	mCommandList->RSSetViewports(1, &mScreenViewport);
 	mCommandList->RSSetScissorRects(1, &mScissorRect);
 
+	D3D12_RESOURCE_BARRIER barrier;
 	Transition(barrier, CurrentBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	mCommandList->ResourceBarrier(1, &barrier);
 
@@ -724,7 +753,7 @@ void Dx::OnResize()
 
 void Dx::Update(const GameTimer& gt)
 {
-	mapRenderer.mMainCamera = mMainCamera;
+	mQueue.WaitUntil(mCmdAllocsFence[currFrameResourceIndex]);
 	mapRenderer.Update(gt, mQueue);
 }
 

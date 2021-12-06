@@ -13,7 +13,7 @@ public:
 class Transform
 {
 public:
-	int scale = 1;
+	float scale = 1;
 	Vector3 position;
 };
 

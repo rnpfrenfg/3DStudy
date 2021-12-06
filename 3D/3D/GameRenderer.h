@@ -39,8 +39,8 @@ private:
 	void BuildPSO();
 	void DefineSkullAnimation();
 
+	void OnKeyboardInput(const GameTimer& gt);
 	void UpdateFrameResource(const GameTimer& gt);
-
 	void UpdateGameObjectsMatrix(std::vector<GameObject>& list);
 
 	void DrawRenderItems(ComPtr<ID3D12GraphicsCommandList>& cmdList, std::vector<RenderItem*>& renderItems);
