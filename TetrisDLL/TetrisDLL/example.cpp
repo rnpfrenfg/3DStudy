@@ -5,6 +5,7 @@
 #include <iostream>
 #include <thread>
 
+#include "EventListener.h"
 #include "EventManager.h"
 #include "Tetris.h"
 
@@ -14,7 +15,7 @@ How to run at visual studio:
 	solution explorer
 	-> Right Click : TetrisDLL
 	-> properties
-	-> Common Properties -> General -> Configuration type = .exe;
+	-> Configuration Properties -> General -> Configuration type = .exe;
 */
 
 #define CLASSNAME L"TetrisTest"
@@ -221,23 +222,41 @@ void BlockRotateTest(HINSTANCE instance)
 	UnregisterClass(CLASSNAME, instance);
 }
 
-void BeepFunction(void* p)
-{
-	std::cout << '\a';//beep
-}
 
-void OnGameEnd(TetrisEventData::GameEnd* data)
+class EventListenerImpl : public EventListener
 {
-	wchar_t result[100];
-	wchar_t msg[] = L"Your score : %d";
-	wsprintf(result, msg, data->tetris->ClearedLine());
-	MessageBox(NULL, result, L"Game Over!!", MB_OK);
-}
+public:
+	EventListenerImpl() = default ;
+	~EventListenerImpl() override = default;
+
+	void HandleEvent(EventType type, void* pData) override
+	{
+		switch (type)
+		{
+		case EventType::GAME_END:
+		{
+			TetrisEventData::GameEnd* data = (TetrisEventData::GameEnd*) pData;
+			wchar_t result[100];
+			wchar_t msg[] = L"Your score : %d";
+			wsprintf(result, msg, data->tetris->ClearedLine());
+			MessageBox(NULL, result, L"Game Over!!", MB_OK);
+			return;
+		}
+		case EventType::LINE_CLEARED:
+		{
+			std::cout << '\a';//beep
+		}
+
+		}
+	}
+};
 
 void PlayTest(HINSTANCE instance)
 {
-	tetris.eventManager.AddEventListener(EventType::LINE_CLEARED, BeepFunction);
-	tetris.eventManager.AddEventListener(EventType::GAME_END, (TetrisSpace::EventFunction)OnGameEnd);
+	EventListenerImpl* eventListener = new EventListenerImpl;
+
+	tetris.eventManager.AddListener(eventListener, EventType::LINE_CLEARED);
+	tetris.eventManager.AddListener(eventListener, EventType::GAME_END);
 
 	SetWindow(instance, PlayTestMSG);
 

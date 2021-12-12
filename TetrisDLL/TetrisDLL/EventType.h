@@ -17,7 +17,10 @@ namespace TetrisSpace
 		SET_BLOCK,
 		LINE_CLEARED,
 		GAME_END,
+		NUM_EVENTS
 	};
+
+	enum { CNUM_EVENTS = static_cast<int>(EventType::NUM_EVENTS) };
 
 	namespace TetrisEventData
 	{

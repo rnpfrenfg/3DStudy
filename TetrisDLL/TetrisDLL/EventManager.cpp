@@ -3,24 +3,48 @@
 
 namespace TetrisSpace
 {
-	void EventManager::PushEvent(EventType et, void* data)
+	void EventManager::AddListener(EventListener* listener, EventType type)
 	{
-		for (EventFunction func : funcList[et])
-			func(data);
+		mListenersVec[static_cast<int>(type)].push_back(listener);
 	}
 
-	void EventManager::AddEventListener(EventType et, EventFunction func)
+	void EventManager::RemoveListener(EventListener* listener, EventType type)
 	{
-		auto iter = funcList.find(et);
-		if (iter == funcList.end())
+		auto& listeners = mListenersVec[static_cast<int>(type)];
+
+		auto result = std::find(listeners.begin(), listeners.end(), listener);
+
+		if (result != listeners.end())
+			listeners.erase(result);
+	}
+
+	void EventManager::RemoveAll(EventListener* listener)
+	{
+		int i = 0;
+		for (int i = 0; i < CNUM_EVENTS; i++)
 		{
-			std::vector<EventFunction> vec;
-			vec.push_back(func);
-			funcList.insert({ et, vec });
+			this->RemoveListener(listener, static_cast<EventType>(i));
 		}
-		else
+	}
+
+	void EventManager::TriggerEvent(EventType type, void* data)
+	{
+		const auto& listeners = mListenersVec[static_cast<int>(type)];
+
+		size_t size = listeners.size();
+		for (int i = 0; i < size; i++)
 		{
-			funcList[et].push_back(func);
+			EventListener* listener = listeners[i];
+			listener->HandleEvent(type, data);
+
+			//to check event removed or not...
+			size = listeners.size();
+
+			EventListener* temp = listeners[i];
+			if (i < size && listener != temp)
+			{
+				i--;
+			}
 		}
 	}
 }

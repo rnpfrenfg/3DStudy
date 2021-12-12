@@ -202,7 +202,7 @@ namespace TetrisSpace
 		
 		TetrisEventData::GameEnd data;
 		data.tetris = this;
-  		eventManager.PushEvent(EventType::GAME_END, &data);
+  		eventManager.TriggerEvent(EventType::GAME_END, &data);
 	}
 
 	void Tetris::DropBlock()
@@ -223,7 +223,7 @@ namespace TetrisSpace
 		data.blockType = blockType;
 		data.resultX = blockX;
 		data.resultY = blockY;
-		eventManager.PushEvent(EventType::BLOCK_DOWN, &data);
+		eventManager.TriggerEvent(EventType::BLOCK_DOWN, &data);
 
 		SetBlock(blockType, blockRotation, blockX, blockY);
 		NextBlock();
@@ -238,7 +238,7 @@ namespace TetrisSpace
 		TetrisEventData::NewBlockStart data;
 		data.tetris = this;
 		data.blockType = blockType;
-		eventManager.PushEvent(EventType::NEW_BLOCK_START, &data);
+		eventManager.TriggerEvent(EventType::NEW_BLOCK_START, &data);
 
 		if (!(CanSetBlock(blockType, blockRotation, blockX, blockY)))
 			GameEnd();
@@ -267,7 +267,7 @@ namespace TetrisSpace
 					goto NEXTLINE;
 			}
 			data.lineIndex = y - cleared;
-			eventManager.PushEvent(EventType::LINE_CLEARED, &data);
+			eventManager.TriggerEvent(EventType::LINE_CLEARED, &data);
 
 			cleared++;
 
@@ -305,7 +305,7 @@ namespace TetrisSpace
 			data.beforeY = blockY;
 			data.resultX = blockX;
 			data.resultY = blockY;
-			eventManager.PushEvent(EventType::BLOCK_MOVE, &data);
+			eventManager.TriggerEvent(EventType::BLOCK_MOVE, &data);
 		}
 	}
 
@@ -329,7 +329,7 @@ namespace TetrisSpace
 			data.beforeY = blockY;
 			data.resultX = blockX;
 			data.resultY = blockY;
-			eventManager.PushEvent(EventType::BLOCK_MOVE, &data);
+			eventManager.TriggerEvent(EventType::BLOCK_MOVE, &data);
 		}
 	}
 
@@ -346,7 +346,7 @@ namespace TetrisSpace
 			data.tetris = this;
 			data.resultX = blockX;
 			data.resultY = blockY;
-			eventManager.PushEvent(EventType::BLOCK_DOWN, &data);
+			eventManager.TriggerEvent(EventType::BLOCK_DOWN, &data);
 		}
 		else
 		{
@@ -371,7 +371,7 @@ namespace TetrisSpace
 		TetrisEventData::BlockRotateLeft data;
 		data.tetris = this;
 		data.resultRotate = blockRotation;
-		eventManager.PushEvent(EventType::BLOCK_ROTATE_RIGHT, &data);
+		eventManager.TriggerEvent(EventType::BLOCK_ROTATE_RIGHT, &data);
 	}
 
 	void Tetris::RotateLeft()
@@ -391,7 +391,7 @@ namespace TetrisSpace
 		TetrisEventData::BlockRotateLeft data;
 		data.tetris = this;
 		data.resultRotate = blockRotation;
-		eventManager.PushEvent(EventType::BLOCK_ROTATE_LEFT, &data);
+		eventManager.TriggerEvent(EventType::BLOCK_ROTATE_LEFT, &data);
 	}
 
 	void Tetris::SudoEnd()
@@ -415,7 +415,7 @@ namespace TetrisSpace
 		data.rotate = blockRotation;
 		data.resultX = x;
 		data.resultY = y;
-		eventManager.PushEvent(EventType::SET_BLOCK, &data);
+		eventManager.TriggerEvent(EventType::SET_BLOCK, &data);
 
 		LineClear();
 	}

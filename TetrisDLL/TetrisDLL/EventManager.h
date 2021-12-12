@@ -6,23 +6,26 @@
 #include <vector>
 
 #include "EventType.h"
+#include "EventListener.h"
 
 namespace TetrisSpace
 {
-	typedef void (*EventFunction)(void* data);
-
 	class TETRISAPI EventManager
 	{
 	public:
 		EventManager() = default;
 		~EventManager() = default;
 
-		void PushEvent(EventType et, void* data);
+		void TriggerEvent(EventType type, void* eventData);
 
-		void AddEventListener(EventType et, EventFunction func);
-	
+		void AddListener(EventListener* listener, EventType type);
+		void RemoveListener(EventListener* listener, EventType type);
+		void RemoveAll(EventListener* pListener);
+
 	private:
-		std::unordered_map<EventType, std::vector<EventFunction>> funcList;
+		EventManager(const EventManager&) = default;
+		EventManager& operator=(const EventManager&) = default;
+
+		std::vector<EventListener*> mListenersVec[static_cast<int>(EventType::NUM_EVENTS)];
 	};
 }
-
