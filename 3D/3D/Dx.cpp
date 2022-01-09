@@ -218,7 +218,7 @@ void Dx::InitDirectX()
 
 	graphicSetting.shadow = false;
 	graphicSetting.mirror = false;
-	mapRenderer.Init(graphicSetting, mDevice);
+	mapRenderer.Init(graphicSetting, mDevice, &m_game);
 
 	DxThrowIfFailed(texManager.Init(mDevice, mCbvSrvUavDescriptorSize));
 
@@ -535,6 +535,20 @@ void Dx::LoadModels()
 
 	}
 
+	{//TODO 
+		boxData.speed = 1;
+		boxData.type = RatsCraft::GameObjectType::TESTTYPE_BOX;
+
+		gameObj.Init(&boxData);
+		gameObj.forward = RatsCraft::Location(40, 40);
+
+		m_game.m_gameObjs.push_back(gameObj);
+
+		
+		mapRenderer.m_objTypeToRenderItem[boxData.type] = skullR;
+		//mapRenderer.AddGameObject(gameObj);
+	}
+
 	cout << "END\n";
 }
 
@@ -754,6 +768,7 @@ void Dx::OnResize()
 void Dx::Update(const GameTimer& gt)
 {
 	mQueue.WaitUntil(mCmdAllocsFence[currFrameResourceIndex]);
+	m_game.Update(gt.DeltaTime());
 	mapRenderer.Update(gt, mQueue);
 }
 

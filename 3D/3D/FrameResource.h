@@ -53,7 +53,7 @@ struct FrameConstants
 class FrameResource
 {
 public:
-	enum {FrameResources = 2};
+	enum {FrameResources = 5};
 
 	UploadBuffer<InstanceData> ObjectDataBuffer;
 	UploadBuffer<MaterialConstants> MaterialBuffer;

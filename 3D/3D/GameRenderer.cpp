@@ -7,7 +7,7 @@
 
 D3D12_GPU_DESCRIPTOR_HANDLE GameRenderer::lastTexHandle = { 0, };
 
-HRESULT GameRenderer::Init(GraphicSetting& setting, ComPtr<ID3D12Device>& device)
+HRESULT GameRenderer::Init(GraphicSetting& setting, ComPtr<ID3D12Device>& device, RatsCraft::RatsGame* game)
 {
 	setting = graphicsSet;
 	mDevice = device;
@@ -51,7 +51,14 @@ HRESULT GameRenderer::Init(GraphicSetting& setting, ComPtr<ID3D12Device>& device
 
 	DefineSkullAnimation();
 
+	m_game = game;
+
 	return S_OK;
+}
+
+void GameRenderer::SetRenderRatsGame(RatsCraft::RatsGame* game)
+{
+	m_game = game;
 }
 
 void GameRenderer::DefineSkullAnimation()
@@ -142,6 +149,23 @@ void GameRenderer::Update(const GameTimer& gt, GPUQueue& queue)
 			mAnimTimePos = 0.0f;
 		mSkullAnimation.Interpolate(mAnimTimePos, mapData.objs[0]._world);
 		*/
+	}
+
+	{//RatsCraft::GameObject -> RenderItems data//TODO
+		auto nowRenderItem = ritemToInstance.begin();
+
+		while (nowRenderItem != ritemToInstance.end())
+		{
+			(*nowRenderItem).second.clear();
+			nowRenderItem++;
+		}
+
+		for (auto& obj : m_game->m_gameObjs)
+		{
+			auto& type = obj.m_objData->type;
+			auto& rItem = m_objTypeToRenderItem[type];
+			ritemToInstance[rItem].push_back(obj);
+		}
 	}
 
 	UpdateGameObjectsMatrix(mapData.objs.list);
@@ -241,6 +265,7 @@ void GameRenderer::UpdateGameObjectsMatrix(std::vector<GameObject>& list)
 		renderItem->gpuIndex = visibleInstanceCount;
 
 		int startIndex = visibleInstanceCount;
+
 		for (; i < len; i++)
 		{
 			auto& item = list[i];
@@ -261,6 +286,19 @@ void GameRenderer::UpdateGameObjectsMatrix(std::vector<GameObject>& list)
 			//XMStoreFloat4x4(&skullRitem->Instances[index].TexTransform, XMMatrixScaling(2.0f, 2.0f, 1.0f));
 
 			//TODO : Check object is in Camera..// AABB
+
+			mCurrFrameResource->ObjectDataBuffer.CopyToBuffer(visibleInstanceCount, &data);
+
+			visibleInstanceCount++;
+		}
+
+		for (auto& obj : ritemToInstance[startItem.item])
+		{
+			auto& loc = obj.loc;
+			data.World = DX::XMMatrixScaling(4, 4, 4) * DX::XMMatrixTranslation(loc.x, loc.y, 1);
+			data.World = DX::XMMatrixTranspose(data.World);
+			data.TexTransform = DX::XMMatrixTranspose(DX::XMMatrixIdentity());//TODO
+			data.MaterialIndex = 0;//TODO  instanceData[i].MaterialIndex;
 
 			mCurrFrameResource->ObjectDataBuffer.CopyToBuffer(visibleInstanceCount, &data);
 

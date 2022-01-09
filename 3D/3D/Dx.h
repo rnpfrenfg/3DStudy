@@ -1,6 +1,7 @@
 #pragma once
 
 #include "include.h"
+#include "IncludeRats.h"
 
 #include "Camera.h"
 #include "RenderItem.h"
@@ -28,7 +29,7 @@ public:
 public:
 	LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-private:
+private://Windows
 	bool InitMainWindow();
 
 	HINSTANCE mhAppInst;
@@ -56,8 +57,7 @@ public:
 
 	int Run();
 
-private:
-
+private://DirectX
 	void InitDirectX();
 
 	void CCreateDevice();
@@ -82,7 +82,7 @@ private:
 	void GetHardwareAdapter(IDXGIFactory4* pFactory, IDXGIAdapter1** ppAdapter);
 	void UpdateGraphicSetting(GraphicSetting& setting);
 
-private:
+private://RatsCraft
 	GPUQueue mQueue;
 	GameRenderer mapRenderer;
 	CTextureManager texManager;
@@ -138,4 +138,11 @@ private:
 
 	GameObject skullObject;//test
 	float cameraHeight = 30;
+
+private://RatsCraft
+	RatsCraft::RatsGame m_game;
+
+	//TODO
+	RatsCraft::GameObject gameObj;
+	RatsCraft::GameObjectData boxData;
 };

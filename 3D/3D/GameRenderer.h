@@ -1,6 +1,7 @@
 #pragma once
 
 #include "include.h"
+#include "IncludeRats.h"
 
 #include "GameTimer.h"
 #include "GraphicSetting.h"
@@ -19,7 +20,8 @@ class GameRenderer
 public:
 	GameRenderer() = default;
 
-	HRESULT Init(GraphicSetting& setting, ComPtr<ID3D12Device>& device);
+	HRESULT Init(GraphicSetting& setting, ComPtr<ID3D12Device>& device, RatsCraft::RatsGame* m_game);
+	void SetRenderRatsGame(RatsCraft::RatsGame* m_game);
 
 	void AddRenderItem(RenderItem* item);
 	void AddGameObject(GameObject& item);
@@ -34,6 +36,10 @@ public:
 
 	Camera mMainCamera;
 
+	//TODO
+
+	std::unordered_map<RatsCraft::GameObjectType, RenderItem*> m_objTypeToRenderItem;
+	std::unordered_map<RenderItem*, std::vector<RatsCraft::GameObject>> ritemToInstance;
 private:
 	void BuildRootSignature();
 	void BuildPSO();
@@ -66,5 +72,8 @@ private:
 
 	float mAnimTimePos = 0;
 	BoneAnimation mSkullAnimation;
+
+private:
+	RatsCraft::RatsGame* m_game;
 };
 

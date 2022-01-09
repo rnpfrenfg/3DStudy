@@ -49,7 +49,7 @@
     <Filter Include="Source File\System">
       <UniqueIdentifier>{7f682d83-6131-4649-9f5d-af2615ae1a0c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source File\System\Util">
+    <Filter Include="Source File\Util">
       <UniqueIdentifier>{c235a53e-9ca4-45de-9f56-153c2ca466f4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -135,6 +135,9 @@
     <ClInclude Include="GameObject.h">
       <Filter>Header File</Filter>
     </ClInclude>
+    <ClInclude Include="IncludeRats.h">
+      <Filter>Header File</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -153,7 +156,7 @@
       <Filter>Source File\Resource</Filter>
     </ClCompile>
     <ClCompile Include="MMFile.cpp">
-      <Filter>Source File\System\Util</Filter>
+      <Filter>Source File\Util</Filter>
     </ClCompile>
     <ClCompile Include="Camera.cpp">
       <Filter>Source File\Object</Filter>
@@ -165,7 +168,7 @@
       <Filter>Source File\System</Filter>
     </ClCompile>
     <ClCompile Include="GameTimer.cpp">
-      <Filter>Source File\System\Util</Filter>
+      <Filter>Source File\Util</Filter>
     </ClCompile>
     <ClCompile Include="CTextureManager.cpp">
       <Filter>Source File\GameSystem</Filter>
@@ -183,9 +186,6 @@
       <Filter>Source File\GameSystem</Filter>
     </ClCompile>
     <ClCompile Include="FbxLoader.cpp">
-      <Filter>Source File</Filter>
-    </ClCompile>
-    <ClCompile Include="GameObject.cpp">
       <Filter>Source File</Filter>
     </ClCompile>
   </ItemGroup>

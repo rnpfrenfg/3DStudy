@@ -21,32 +21,32 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{f412965d-2738-4302-9673-12dfed7ca2b9}</ProjectGuid>
-    <RootNamespace>My3D</RootNamespace>
+    <ProjectGuid>{dc3de947-a05a-4607-b676-293b68a6a7c5}</ProjectGuid>
+    <RootNamespace>RatsCraft</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -86,14 +86,13 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>FBXInclude\include;..\..\TempName\TempName;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>
+      </SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>FBXInclude\lib;TempNameGame</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -102,30 +101,28 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>FBXInclude\include;..\..\TempName\TempName;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>
+      </SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>FBXInclude\lib;TempNameGame</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>FBXInclude\include;..\..\TempName\TempName;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>
+      </SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>FBXInclude\lib;TempNameGame</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -134,69 +131,41 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>FBXInclude\include;Rats\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>
+      </SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>.\Rats\lib;FBXInclude\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="AnimationHelper.h" />
-    <ClInclude Include="Camera.h" />
-    <ClInclude Include="CD3DX12_ROOT_PARAMETER.h" />
-    <ClInclude Include="FbxLoader.h" />
-    <ClInclude Include="FMemoryPool.hpp" />
-    <ClInclude Include="FrameResource.h" />
-    <ClInclude Include="GameObject.h" />
-    <ClInclude Include="GameRenderer.h" />
+    <ClInclude Include="EventData.h" />
+    <ClInclude Include="EventListener.h" />
+    <ClInclude Include="EventManager.h" />
+    <ClInclude Include="EventType.h" />
+    <ClInclude Include="GameMap.h" />
     <ClInclude Include="GameMapData.h" />
-    <ClInclude Include="GPUQueue.h" />
-    <ClInclude Include="GPUResourceManager.hpp" />
-    <ClInclude Include="GraphicSetting.h" />
-    <ClInclude Include="IncludeRats.h" />
-    <ClInclude Include="RenderItem.h" />
-    <ClInclude Include="CommandBundle.h" />
-    <ClInclude Include="CTexture.h" />
-    <ClInclude Include="CTextureManager.h" />
-    <ClInclude Include="Dx.h" />
-    <ClInclude Include="GameSetting.h" />
-    <ClInclude Include="GameTimer.h" />
+    <ClInclude Include="GameObject.h" />
+    <ClInclude Include="GameObjectData.h" />
     <ClInclude Include="include.h" />
-    <ClInclude Include="KeyboardSetting.h" />
-    <ClInclude Include="Light.h" />
-    <ClInclude Include="MMFile.h" />
-    <ClInclude Include="tempd3dx.h" />
-    <ClInclude Include="TextureLoader.h" />
-    <ClInclude Include="UploadBuffer.h" />
-    <ClInclude Include="Vertex.h" />
+    <ClInclude Include="includeCpp.h" />
+    <ClInclude Include="Location.h" />
+    <ClInclude Include="RatsGame.h" />
+    <ClInclude Include="Tile.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AnimationHelper.cpp" />
-    <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="FbxLoader.cpp" />
-    <ClCompile Include="FrameResource.cpp" />
-    <ClCompile Include="GameRenderer.cpp" />
-    <ClCompile Include="GPUQueue.cpp" />
-    <ClCompile Include="RenderItem.cpp" />
-    <ClCompile Include="CTexture.cpp" />
-    <ClCompile Include="CTextureManager.cpp" />
-    <ClCompile Include="ReadFromDDSFile.cpp" />
-    <ClCompile Include="Dx.cpp" />
-    <ClCompile Include="GameTimer.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="MMFile.cpp" />
-    <ClCompile Include="TextureLoader.cpp" />
-    <ClCompile Include="Vertex.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="computeShader.txt" />
+    <ClCompile Include="EventManager.cpp" />
+    <ClCompile Include="GameMap.cpp" />
+    <ClCompile Include="GameMapData.cpp" />
+    <ClCompile Include="GameObject.cpp" />
+    <ClCompile Include="GameObjectData.cpp" />
+    <ClCompile Include="Location.cpp" />
+    <ClCompile Include="RatsGame.cpp" />
+    <ClCompile Include="Tile.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
