@@ -136,15 +136,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>FBXInclude\include;Rats\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>FBXInclude\include;..\..\TempName\TempName;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>.\Rats\lib;FBXInclude\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>FBXInclude\lib;TempNameGame</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -160,7 +159,6 @@
     <ClInclude Include="GPUQueue.h" />
     <ClInclude Include="GPUResourceManager.hpp" />
     <ClInclude Include="GraphicSetting.h" />
-    <ClInclude Include="IncludeRats.h" />
     <ClInclude Include="RenderItem.h" />
     <ClInclude Include="CommandBundle.h" />
     <ClInclude Include="CTexture.h" />
@@ -182,6 +180,7 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="FbxLoader.cpp" />
     <ClCompile Include="FrameResource.cpp" />
+    <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GameRenderer.cpp" />
     <ClCompile Include="GPUQueue.cpp" />
     <ClCompile Include="RenderItem.cpp" />

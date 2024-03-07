@@ -1,1 +1,0 @@
-#define RatsCraftAPI __declspec(dllexport)
