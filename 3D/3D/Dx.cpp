@@ -223,12 +223,12 @@ void Dx::InitDirectX()
 	DxThrowIfFailed(texManager.Init(mDevice, mCbvSrvUavDescriptorSize));
 
 	{//LoadTextures
+		DxThrowIfFailed(TextureLoader::Load(L"stone.dds", mCommandList, mDevice, texStone));
+		texManager.AddTexture(texStone);
 		DxThrowIfFailed(TextureLoader::Load(L"sample.dds", mCommandList, mDevice, testTex));
 		texManager.AddTexture(testTex);
 		DxThrowIfFailed(TextureLoader::Load(L"wirefence.dds", mCommandList, mDevice, texWirefence));
 		texManager.AddTexture(texWirefence);
-		DxThrowIfFailed(TextureLoader::Load(L"stone.dds", mCommandList, mDevice, texStone));
-		texManager.AddTexture(texStone);
 		DxThrowIfFailed(TextureLoader::Load(L"cubemap.dds", mCommandList, mDevice, texCubemap));
 		texManager.AddCubeMap(texCubemap);
 	}
@@ -349,7 +349,7 @@ void Dx::LoadModels()
 		fin >> indexList[i];
 	}
 
-	skullMesh.Init(mDevice, &texWirefence, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, vertexList, vertexes, indexList, 3 * indexes);
+	skullMesh.Init(mDevice, &testTex, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, vertexList, vertexes, indexList, 3 * indexes);
 
 	delete[] indexList;
 	delete[] vertexList;
@@ -387,21 +387,6 @@ void Dx::LoadModels()
 
 	UINT32 tempI[6] = { 0,1,2, 0, 2, 3 };
 
-	{
-		RenderItem* tempR = new RenderItem;
-		tempR->mesh = new Mesh;
-		tempR->mesh->Init(mDevice, &testTex, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, tempV, _countof(tempV), tempI, 6);
-		mapRenderer.AddRenderItem(tempR);
-
-		GameObject temp;
-		auto& tempP = temp.transform.position;
-		tempP.x = 5;
-		tempP.y = tempP.z = 0;
-		temp.transform.scale = 4;
-		temp.item = tempR;
-		mapRenderer.AddGameObject(temp);
-	}
-
 	//Tiles
 	{
 		Vertex tempV[4];
@@ -420,7 +405,7 @@ void Dx::LoadModels()
 
 		RenderItem* temp = new RenderItem;
 		temp->mesh = new Mesh;
-		temp->mesh->Init(mDevice, &testTex, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, tempV, _countof(tempV), tempI, 6);
+		temp->mesh->Init(mDevice, &texStone, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, tempV, _countof(tempV), tempI, 6);
 		mapRenderer.AddRenderItem(temp);
 
 		const float tttttt = 100;

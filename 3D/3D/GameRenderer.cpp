@@ -158,7 +158,6 @@ void GameRenderer::Draw(ComPtr<ID3D12GraphicsCommandList> cmdList, GPUQueue& que
 	auto& descriptorHeap = CTextureManager::GetInstance()->mSrvDescriptorHeap;
 	ID3D12DescriptorHeap* descriptorHeaps[] = { descriptorHeap.Get() };
 	cmdList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-	cmdList->SetGraphicsRootDescriptorTable(3, descriptorHeap->GetGPUDescriptorHandleForHeapStart());
 
 	cmdList->SetGraphicsRootShaderResourceView(1, materialCB.mBuffer->GetGPUVirtualAddress());
 	cmdList->SetGraphicsRootConstantBufferView(2, frameCB.mBuffer->GetGPUVirtualAddress());
@@ -177,6 +176,8 @@ void GameRenderer::DrawRenderItems(ComPtr<ID3D12GraphicsCommandList>& cmdList, s
 
 		cmdList->SetGraphicsRootShaderResourceView(0, mCurrFrameResource->ObjectDataBuffer.mBuffer->GetGPUVirtualAddress() + renderItem->gpuIndex * mCurrFrameResource->ObjectDataBuffer.ElementSize());
 
+		if(mesh->mTex != nullptr)
+		cmdList->SetGraphicsRootDescriptorTable(3, mesh->mTex->_handle);
 		cmdList->IASetVertexBuffers(0, 1, &mesh->mVertexBufferView);
 		cmdList->IASetIndexBuffer(&mesh->mIndexBufferView);
 		cmdList->IASetPrimitiveTopology(mesh->topology);
